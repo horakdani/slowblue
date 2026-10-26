@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slowblue — a felújítás állapota</title>
+
+    <!--
+      Ez a fájl egyszerre az állapot és a képe. A `slowblue-state` blokk az egyetlen
+      igazságforrás: a `/slowblue` parancs azt olvassa és azt írja át, a lap alatta
+      lévő szkript pedig csak megjeleníti. Ha kézzel szerkeszted, a JSON-t
+      szerkeszd, ne a HTML-t.
+
+      A kép ugyanazt a doktrínát követi, mint a játék: kemény lapos vektor,
+      teal plusz egy meleg második szín, semmi glow, blur vagy szemcse.
+    -->
+    <script type="application/json" id="slowblue-state">
+{
+  "version": 1,
+  "branch": "upgrade",
+  "updated": "2026-08-05",
+  "title": "Slowblue — Mindful Gaming felújítás",
+  "subtitle": "A hatpontos kritériumrendszer végigvezetve a meglévő hét felvonáson.",
+  "frozen": [
+    "A bukás-rendszer eredetiben marad: vadász, 40 %-os rajküszöb, Failure.ts.",
+    "A Game Over képernyő megjelenítése sem változik. Az 1. kritérium csak a hangulatra vonatkozik.",
+    "Monetizáció nincs hatókörben. A repó hálózat-mentessége megmarad.",
+    "Capacitor / TWA csomagolás nincs hatókörben. Csak a haptika-absztrakció készül el.",
+    "Balansz-szám csak sweep-méréssel indokolva változhat, és a változás ide kerül a naplóba.",
+    "A Kék emelkedő számai soha nem generálódnak újra: az az egyetlen aláírt kép, a többi hozzá mérődik."
+  ],
+  "phases": [
+    {
+      "id": 0,
+      "title": "Mérőrendszer",
+      "goal": "Legyen mihez visszatérni: egy parancs, egy állapot, egy kép.",
+      "criteria": [],
+      "tasks": [
+        {
+          "id": "0.1",
+          "title": "A /slowblue parancs megírva",
+          "status": "done",
+          "note": ".claude/commands/slowblue.md — fázisonként fut, verify + dashboard + commit a záráskor."
+        },
+        {
+          "id": "0.2",
+          "title": "A dashboard megírva",
+          "status": "done",
+          "note": "docs/progress.html, beágyazott JSON állapottal. Ez a fájl."
+        },
+        {
+          "id": "0.3",
+          "title": "Az alkotmány és a döntések memóriába",
+          "status": "done",
+          "note": "A hat kritérium és a tíz eldöntött kérdés."
+        },
+        {
+          "id": "0.4",
+          "title": "A kiindulási audit rögzítve",
+          "status": "done",
+          "note": "Lásd a lap alján. A 2–5. kritérium nagyrészt már teljesült."
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "title": "Bizonyítékok",
+      "goal": "Semmit ne higgyünk el a kódról, amit nem mértünk meg.",
+      "criteria": [
+        2,
+        3,
+        5
+      ],
+      "tasks": [
+        {
+          "id": "1.1",
+          "title": "TTI-mérés, 3 másodperces budgettel",
+          "status": "done",
+          "commit": "ddd6bf3",
+          "note": "e2e/measure.spec.ts. Hidegen 1033 ms, melegen 290 ms a navigáció kezdetétől a mozgó halakig; a bundle 120 KB-ot hoz le, melegen nullát. A budget megvan — de a mérés a motor idejét méri: az első indításkor eléje kerül a 7,1 mp-es stúdió-ident, amit egy érintés átugrik. Ezt a 2.4 zárta le: a budget a címképernyőnél indul, a ceremónia külön mérve megy a naplóba."
+        },
+        {
+          "id": "1.2",
+          "title": "Allokáció-szonda a tick + render ciklusra",
+          "status": "done",
+          "commit": "ddd6bf3",
+          "note": "V8 sampling heap profiler CDP-n, 600 képkockán, üres ciklussal kivonva. 104 B/képkocka a nyitóképen, 113–120 B/képkocka a legterheltebb képen. HELYESBÍTVE a 3. fázisban: ez a mérés hidegen készült — 240 képkocka után indult a mintavétel, tehát nagyrészt a V8 fordítóját mérte, nem a játékot, és a helylistája is félrevezetett. A valódi szám melegen és terelt futamon 37 B/képkocka nyitva és 109 terhelten. A nagyságrend így is ugyanaz, a zero-GC állítás áll — csak most a helyes okból."
+        },
+        {
+          "id": "1.3",
+          "title": "Hideg offline próba",
+          "status": "done",
+          "commit": "ddd6bf3",
+          "note": "Mérve, és rosszabb, mint egy hibaüzenet: a dokumentum betölt (readyState complete), a bundle 200-as választ kap text/html törzzsel — a worker index.html-t ad vissza minden nem cache-elt kérésre —, tehát a képernyő némán üres. Második indításkor offline hibátlan. Ez a 2.1 pontos feladatleírása."
+        },
+        {
+          "id": "1.4",
+          "title": "120 Hz / ProMotion próba",
+          "status": "done",
+          "commit": "ddd6bf3",
+          "note": "tests/promotion.test.ts, 30/60/90/120/144 Hz-en 60 mp-nyi óra, vsync-remegéssel is. Az eltérés sehol sem több egy lépésnél (120 Hz-en −8 ms), a maxSteps sosem telik be, az alpha végig 1 alatt. 120 Hz-en a képkockák fele interpoláció (alpha 0 és 0,5 között váltakozik), nem duplikátum."
+        },
+        {
+          "id": "1.5",
+          "title": "DPR és képélesség 1× / 2× / 3× kijelzőn",
+          "status": "done",
+          "commit": "ddd6bf3",
+          "note": "1× és 2× natív, 3×-on 0,67 a natív arány. Az él képernyőfotón mérve 2×-en 1,0 CSS px, 3×-on 1,33 — a 3× tehát nem élesebb, hanem lágyabb. A clamp mégis marad: egy képkocka 4,3 ms dpr 1-en és 14,5 ms dpr 2-n, amiből a natív 3× 31,6 ms lenne, a 16,7 ms-os keret duplája."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "PWA és indulás",
+      "goal": "Repülőmódban is elinduljon, és gyorsan.",
+      "criteria": [
+        5
+      ],
+      "tasks": [
+        {
+          "id": "2.1",
+          "title": "A hasított bundle precache-elése",
+          "status": "done",
+          "commit": "b827cd7",
+          "note": "A build írja meg a workert: a vite.config.ts tide-precache-manifest plugin-ja a dist/sw.js BUILD sorát cseréli le az asset-listára, a cache neve a lista sha-256-ja, így az activate pont akkor takarít, ha változtak a fájlok. A másolás önmagában kevés volt: a preview Vary: Origin-t küld, a crossorigin module script Origin fejlécet visz, a precache plain fetch-e nem — a bundle a cache-ben ült és a match mégis nemet mondott. Ezért a lookup ignoreVary."
+        },
+        {
+          "id": "2.2",
+          "title": "Production sourcemap le vagy rejtve",
+          "status": "done",
+          "commit": "b827cd7",
+          "note": "sourcemap: 'hidden'. A 2,4 MB-os .map megmarad a lemezen, hogy az allokáció-szonda minifikált kereteit vissza lehessen nevezni, de nincs sourceMappingURL a bundle végén, és a precache-listából ki van szűrve — a drótra nem kerül fel."
+        },
+        {
+          "id": "2.3",
+          "title": "A hideg offline próba zöldre",
+          "status": "done",
+          "commit": "b827cd7",
+          "note": "Zöld: a hideg telepítés utáni offline indulás booted + playable, a bundle 200-as text/javascript a cache-ből. A fallback szűkítve: csak navigációra megy, így egy nem létező asset Response.error()-t kap a 200-as HTML helyett — a néma üres képernyő innentől hangos hiba."
+        },
+        {
+          "id": "2.4",
+          "title": "Indulási budget a verify-ban",
+          "status": "done",
+          "commit": "b827cd7",
+          "note": "A budget a kezdőképernyőnél indul, döntés szerint: a 3000 ms külön megy a címképernyőig és a tap→játékmenet szakaszra, az ident és a hangkártya kívül marad — megmaradnak, csak nem terhelik a budgetet. Mérve: hidegen 43 ms a címképernyőig és 94 ms a taptől a játékmenetig, melegen 31 és 17 ms. Az első indulás ceremóniástul 11 110 ms a címképernyőig, abból 7,1 mp az ident és 3,6 mp a hangkártya — mérve és naplózva, de nem kapuzva."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Zero-GC megerősítés",
+      "goal": "Egyetlen micro-stutter se legyen allokációból.",
+      "criteria": [
+        3
+      ],
+      "tasks": [
+        {
+          "id": "3.1",
+          "title": "A szonda talált allokációk kivezetése",
+          "status": "done",
+          "commit": "a8d86ea",
+          "note": "Nincs mit kivezetni, és ez most mérés, nem feltevés. A szonda megtanult nevet adni a saját helyeinek: az e2e/sourcemap.ts visszaolvassa a .map-et, amit a 2.2 pont ezért hagyott a lemezen. A névsor élén a Math.hypot állt, 103 B/képkocka a terhelt kép 123-ából — mind a 46 hívási hely át lett írva Math.sqrt-ra, mire a hypot sor eltűnt a listáról és a végösszeg 123-ról 124-re mozdult. A bájt sosem a hypoté volt, hanem a fordítóé, aki épp abban a keretben állt. A csere ráadásul elmozdította az act I bit-azonossági kanáriját (1,8856147 → 1,8710520), amit a design számjegyre véd, ezért teljes egészében visszavonva. A tanulság a mérőben maradt: hideg mintavétel helylistája nem munkalista."
+        },
+        {
+          "id": "3.2",
+          "title": "Allokáló getterek out-paraméteresre",
+          "status": "done",
+          "commit": "a8d86ea",
+          "note": "Mérve, és nem indokolt. A korábbi jegyzet tévedett: a centroid() nemcsak a metrics()-ből hívódik, hanem a World.step-ből is, sőt kétszer, mert a spread() újra meghívja — és a World.get level is objektum-típusú. Melegen egyik sem éri el a kupacot: a V8 escape-analízise skalárra bontja azt a literált, ami nem hagyja el az optimalizált függvényt. A szimulációs fél így is 20 B/képkocka nyitva és 65 terhelten. A getterek olvashatók maradnak, mert az out-paraméter itt kimutatható nyereség nélküli csúfítás lenne."
+        },
+        {
+          "id": "3.3",
+          "title": "Object pool audit",
+          "status": "done",
+          "commit": "a8d86ea",
+          "note": "Szemle megvolt, javítás nem kell. Olvasással hét szerkezeti per-tick allokáció van: a SwarmContext literál (World.ts:841), a centroid kétszer, a PredatorSystem/RescueSystem/ObstacleSystem négy visszaadott tömbje, a takeEvents üres tömbje, és egy .filter() a RescueSystem.update-ben — utóbbit a 3. kritérium néven is tiltja. Melegen mérve egyikük sem jelenik meg a kupacon. A pooling ott van, ahol számít: az ágensek fix tömbben ülnek, a részecske- és effekt-listák újrahasznosítanak. A négy tömb és a filter szándékosan marad, mert a csere olvashatóságot vinne el mért nyereség nélkül."
+        },
+        {
+          "id": "3.4",
+          "title": "A szonda bekötve regresszió-védőnek",
+          "status": "done",
+          "commit": "a8d86ea",
+          "note": "Két védő, és mindkettő azt is ellenőrzi, hogy volt-e egyáltalán mit mérni. Új: tests/allocation.test.ts, ami a node:inspector sampling profilerét használja böngésző nélkül, 7 mp alatt fut, és a npm test része — a szimulációs felet mostantól minden commit védi. Az e2e plafon 20 000-ről 400 B/képkockára szigorodott, a mért 37 és 109 fölé négyszeres ráhagyással. A mérés két néma hibája is javítva: a bemelegítés hiánya (240 képkocka után a szám tízszeres volt, 4000 után áll be) és az, hogy mindkét allokációs teszt egy rég megbukott futamot mért — a raj ringMissed-re veszett a mintavétel negyedik másodpercében, és a teszt ettől lett zöld. Mindkét szonda terel most (az e2e a bot.ts politikáját másolja, a unit egyenesen a makeAimBot-ot hívja), és utána állítja, hogy a phase még 'running'."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Mobil tapintás",
+      "goal": "A kéz alatt is stimmeljen, és készen álljon a natív hívásokra.",
+      "criteria": [
+        4
+      ],
+      "tasks": [
+        {
+          "id": "4.1",
+          "title": "Haptika-absztrakció",
+          "status": "done",
+          "commit": "4711357",
+          "note": "src/platform/Haptics.ts: egy driver-varrat és egy haptic(név) hívás. HELYESBÍTVE: a korábbi jegyzet tizenhárom szórt navigator.vibrate() hívásról szólt, valójában tíz híváspont volt, mind egy helyi wrapperen keresztül a main.ts-ben — a mintázatok voltak szórtak, nem a hívások. A tíz híváspont helyén most tíz nevesített cue van, és a main.ts-ben nem maradt közvetlen vibrate — teszt őrzi. A cue mindkét nyelvet viszi, mert a natív csere nem ms-tömbökkel megy: a Core Haptics és a HapticFeedbackConstants súlyt vesz át (light/medium/heavy/success/warning), nem mintázatot. Ez nem elméleti: a navigator.vibrate-et az iOS Safari sosem implementálta, tehát ma mind a tizenhárom hívás no-op volt azon a platformon, ahova ez a játék a legjobban készül. Egy Capacitor/TWA burok egyetlen setHapticsDriver() hívással veszi át."
+        },
+        {
+          "id": "4.2",
+          "title": "Haptikai szótár",
+          "status": "done",
+          "commit": "4711357",
+          "note": "HAPTIC_CUES, tíz bejegyzés: rescue, reform, bite, level, ring, ringLost, complete, actHandover, circuitClosed, runEnd. A skála a terv: a rescue a leggyakoribb, ezért a legkönnyebb; a bite az egyetlen nehéz koppanás; három impulzust csak a két lezárás kap, hogy a kéz kinézés nélkül megkülönböztesse a felvonás végét egy elsuhanó gyűrűtől. A mintázatok fagyasztott modulszintű tömbök, tehát az eseménykezelő per-esemény tömb-literáljai lekerültek a hot pathról. Három őr: minden mintázat páratlan hosszú (rezgésre végződik, nem csöndre) és 10–80 ms közötti, és a szótárban nincs olyan cue, amit a játék nem süt el."
+        },
+        {
+          "id": "4.3",
+          "title": "Safe-area valós kivágás-geometriákon",
+          "status": "done",
+          "commit": "4711357",
+          "note": "A CSS megvolt, csak sosem futott: a Chromium nem emulál kivágást, tehát a suite-ban minden inset nulla volt, és minden safe-area szabály holt kód. A tizenhat env(safe-area-inset-*) ezért egy helyre került — négy custom property a :root-on —, mert azt egy teszt felül tudja írni. e2e/safearea.spec.ts öt valós geometrián mér (Dynamic Island 59/34, notch 47/34, fekvő 59/21/59 elforgatott nézettel, Android navsáv 24/48, és a sík 0-ás eset), és két szabály tényleg rossz volt: a shell overlay 20px-es margója fekvőben a képernyő széléről mérődött, nem az üvegről, a mixer fiók pedig 100vw-ből számolta a szélességét, tehát a jobb insethez tűzött fiók bal éle a szemközti kivágás alá csúszott. A canvas oldal külön ellenőrizve — a DOM és a canvas két külön úton kerüli a kivágást, és a néma hiba az, amikor csak az egyik mozdul."
+        },
+        {
+          "id": "4.4",
+          "title": "Pointer élesetek",
+          "status": "done",
+          "commit": "4711357",
+          "note": "tests/pointer.test.ts, kilenc eset, böngésző nélkül (a könyvelést méri, nem a DOM-ot). A valódi hiba a fel nem emelt ujj volt: a pointercancel az udvarias eset, de egy háttérbe küldött WebView vagy egy elvett iOS él-gesztus után a track örökre bent maradt, az activePointers sosem nullázott, és a következő ugyanazt az azonosítót újrahasználó pointermove percekkel korábbi pozícióból húzott egy csíkot az egész óceánon. A lap elvesztése (blur, visibilitychange) mostantól minden ujjat felenged, a gesztus-vég jelentésével együtt. Mellette: ugyanarra az azonosítóra érkező második pointerdown lezárja az elsőt, különben a következő felemelés ötmásodperces gesztust jelent; a futam alatt véget érő run kiengedi a még lent lévő ujjat, mert az onDown őre ott nem segít; a dispose kitakarítja a startedAt-ot; és a halott, .map()-elő pointerPositions() törölve."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Web Audio harmonizáció",
+      "goal": "Semmi ne kattanjon, és minden ütközés a skálán szóljon.",
+      "criteria": [
+        1,
+        2
+      ],
+      "tasks": [
+        {
+          "id": "5.1",
+          "title": "Loop-kattanás audit",
+          "status": "done",
+          "commit": "6bc2810",
+          "note": "HELYESBÍTVE: nincs nyolc loop. A nyolc ágyhoz nem tartozik nyolc hangfájl — mind ugyanabból épül: tartott oszcillátorokból, amik sosem indulnak újra, Poisson-ütemezett eseményekből, és a közös 2 másodperces barnazajból. Az egész motorban tehát egyetlen loop-határ van, azé az egy pufferé, és hét hang teszi rá a loop=true-t. Négy éri el a varratot: a csillám mind a nyolc ágyban 1,18 másodpercenként, a IV. felvonás tartott lélegzete 1,67-enként, az V. plazmaburka 3,64-enként, és a III. nyírása gesztusonként hatszor-húszszor, egy csengésre elég szűk sávszűrőn át. A varrat mérve: 0,153-as lépés a 0,036-os átlagos mintaközi mozgással szemben (4,5×), és csak 1,6 dB-lel a jel saját RMS-e alatt; 8 kHz-es felüláteresztőn át 3,2 dB-lel a puffer leghangosabb rendes ezredmásodperce fölé emelkedett. Nem durranás, hanem kattanás 0,85 Hz-en, örökké — ami rosszabb, mert a szabályosat megtalálja a fül. Javítás: a szivárgó integrátor egypólusú és stabil, tehát periodikus bemenetre periodikus a kimenete, ha az állapota beállt — így az állapot most a fehér sorozat farkán melegszik be, mielőtt az igazi menet indul. Nincs crossfade, nincs spektrális ár, egy extra menet 2 másodpercnyi mintán, egyszer, unlockkor. Utána: 0,030-as lépés (0,84× egy rendes átmenet) és −2,2 dB a 8 kHz-es varraton."
+        },
+        {
+          "id": "5.2",
+          "title": "A fizikai ütközések harmonikus hangolása",
+          "status": "done",
+          "commit": "6bc2810",
+          "note": "Mérve mind a nyolc ágyon, ötperces futamokkal, a játék saját harmonikus modellje ellen: 1445 hang szólt fél másodpercnél tovább, és 745 közülük — bő a fele — 25 centnél messzebb esett bármitől, amit a játék jogosan szólaltat meg. Átlag 31 cent, legrosszabb 99. Negyedhang, két másodpercig kitartva, egy sosem mozduló orgonapont fölött. Utána: 25 cent fölött semmi, átlag 0,2, legrosszabb 12 — és az a 12 a bálna szándékosan inharmonikus felhangja, aminek ott a helye. A kontroll ugyanennyit ér: a rövid hangok 44,6 centen állnak a munka előtt és után is, egy tizedesre — amiből textúra lett, abból nem lett hang. A szabály időtartam, nem ízlés: fél másodpercnél hosszabb hangolt hang az hang, és a skálán kell lennie; ennél rövidebb az textúra, és nem szabad rá tenni. Új src/audio/Scale.ts. Kilenc hely javítva: a harang sötétítése (folytonos 1,0→0,75 szorzó, aminek csak a két vége volt zenei — minden csengőt és a level/surface/complete/remembrance/circle cue-kat is érintette, most egész skálafokokban költ); a bálna (a saját fejléce pentatont állított, és pentaton is volt — véletlen alaphangon; ez két nekifutás volt, mert a hangonkénti kvantálás megjavította a hangnemet és eltörte a glissandót, kvartból kisterc lett, amit a fájl saját vibrátó-szabálya kapott el, úgyhogy most skálafokokban lép); a kristály (a III. felvonás egyetlen hangolt hangja, 1,4–2,9 mp-es tiszta szinusz, és a saját fejléce mondja ki, hogy ez a leképezés választott, nem levezetett); a hópehely; az infrahang (10–22 mp az orgonapont saját oktávjában); a mennydörgés szubja (4,5 mp, 44 Hz, 11 Hz-re a gyökértől — pont lebegési távolság); a kavics; és a vadász harapása, ami 52 Hz-re csúszott le, azaz egy G#-ra: a vezetőhangra, arra az egyetlen hangközre, amiért a SCALE-ben nincs szeptim. A keringési simítás ráadásul ötfokos létra lett, amit a játékos a kezével mászik. Szabadon marad és teszt őrzi: buborék, esőcsepp, fodor, szárnycsapás, kopogás, szikra, füttyös, szívverés — tizenöt csepp másodpercenként öt hangosztályra ejtve zenedoboz lenne, nem eső."
+        },
+        {
+          "id": "5.3",
+          "title": "Minden gain-váltás rampán",
+          "status": "done",
+          "commit": "6bc2810",
+          "note": "Nincs mit javítani, és ez most mérés, nem feltevés. A motorban negyvennyolc .value = írás van, és mind konstrukciós: friss csomóponton, a start() előtt, amikor még semmi nem visz jelet. Ami lépés lenne, az a negyvenhat tartott paraméter valamelyikének közvetlen írása — a chord négy hangja magasságban és elhangolásban, a gainje és a vágása, a csillám hat paramétere, a lélegzet és a burok gainben és vágásban, a gyűrű két oszcillátora a gainjével és panjával, és mind a tíz mixer-sáv mindkét küldése —, mert azokat a setBed, setBreath, setLevels, setRingHold és a tick tolja hatvanszor másodpercenként egy már futó gráf alatt. Az állítás igaz volt, csak semmi nem őrizte. A StubParam mostantól külön számolja a kétféle írást, és a teszt végigviszi az összes utat (mind a nyolc ágy, lélegzet, gyűrű, mixer, némítás, Deep Calm), majd nullát követel. Ellenőrizve: egyetlen setTargetAtTime-ot .value =-re cserélve a védő tíz paraméteren bukik."
+        },
+        {
+          "id": "5.4",
+          "title": "Az unlock kézfogás WebView-környezetben",
+          "status": "done",
+          "commit": "6bc2810",
+          "note": "HELYESBÍTVE: a jegyzet félig tévedett. A kézfogás *állapotgépét* a smoke.spec.ts:361 már fedte — kicseréli az AudioContextet, megvárja a running-ot, ellenőrzi a navigator.audioSession playback-re állítását, kézzel felfüggeszti és egy koppintással visszahozza. Amit semmi nem fedett, az pont az, amit a jegyzet leír: a néma játék. Minden ottani állítás átmegy egy olyan motoron is, aminek a mixere sosem nyílt ki, aminek az ágya nem létező sávokra oszt, vagy aminek a contextCtor-ja olyat adott vissza, ami mindent elfogad és semmit nem szólaltat meg — mert az állapot nem hang. Új AudioEngine.voicesPlayed számolja a mixer-sávot ténylegesen elérő hangokat (egy egész szám a connectTrack-ben, a sávkeresés után), a metrics() kiadja audioState/audioRunning/audioVoices néven, és az e2e/unlock.spec.ts három tesztje erre állít. Két dolog menet közben derült ki, és mindkettő a tesztről szólt, nem a kódról. Az első: a háttérbe küldött futam szándékosan szüneteltetve tér vissza, mert egy magától továbbfutó játék elveszi a játékostól azt, ami az értesítései alatt történt — a hang tehát akkor jön vissza, amikor a játékos, és a teszt középső állítása most az, hogy addig nem. A második: az első változat fix 2,5 másodperces ablakban kért öt hangnál többet egy 2,2/s-os Poisson-ütemezőtől, ami nagyjából érmefeldobás, és a teljes verify-on fejre esett — a motor minden ütemezője szándékosan Poisson, épp azért, hogy ne legyen ráüthető ritmus, tehát nem lehet fix ablakban garanciát kérni tőle. Mostantól állapotra vár, nem számra. Harmadszor: az idempotencia-teszt eredetileg a hangszámlálón állított, és nem működhetett volna — egy gráf-újraépítés hat hangot ad, az ágy ugyanennyi idő alatt magától hármat-hatot, tehát a jel és a zaj egyforma nagy volt. Most közvetlenül az AudioContext konstruktorát számolja: tizenhárom gesztus után pontosan egy."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Cozy és Zen hangulat",
+      "goal": "Mind a negyvenkét állomás legyen szép, ne csak a hat első.",
+      "criteria": [
+        1
+      ],
+      "chunked": true,
+      "tasks": [
+        {
+          "id": "6.1",
+          "title": "A feat/visual-ascension beolvasztása",
+          "status": "void",
+          "note": "TÖRÖLVE, mert a premisszája nem állt. A feat/visual-ascension ág sehol nincs: nem lokális, nincs az originon (hét head, egyik sem az), nincs a reflogban és nincs dangling objektumként; a Strata.ts soha nem volt ebben az objektum-adatbázisban, és nincs a gépen sehol (egyetlen TIDE-klón van). A repó 2026-08-04-én friss klón, az ág soha nem járt itt. A blokkoló ráadásul fölösleges is volt: a Backdrop.ts mind a 42 állomás-backdropját dispatch-eli (spray…trenchHome), implementálva a Sky/Upper/Orbit/Reentry/Rain/Homecoming fájlokban — az alap megvan, a 6.2–6.7 valódi munkája a meglévő negyvenkét kép felülvizsgálata, nem a megépítése."
+        },
+        {
+          "id": "6.2",
+          "title": "II. felvonás — Repülés",
+          "status": "done",
+          "commit": "11cdc78 + fc1bc24",
+          "note": "Hat állomás megnyitva és megítélve a nyitó ÉS a késői képén — a késői addig sosem volt megnézve, pedig az állomás saját progressze fél képernyőn átviszi a padlóját, a fényét és a lemezét. Két hiba, mindkettő ugyanaz az osztály, aminek most neve van: élő gradienst elvág a saját fillRect-je. Egy CanvasGradient csak ott éltelen, ahol nullára fut; ha a téglalap máshol áll meg, teljes képernyő-szélességű kemény vonal marad — és a suite minden tesztje átmegy, mert a keret nem lapos, nem fekete, nem kiégett, és pontosan azt a geometriát rajzolja, amit a unit tesztje állít. Az Üllő fénysávja 0→0,24-en futott és a téglalapja a 0,24-en ért véget: 14,0 fényerő-egység éltől élig, egy harmad képernyővel a vihartető fölött, a felvonás legjobb képében — most a lemezen tetőzik és alatta hal el, 4,3. A Zivatar fényrése 0,3h-nál kezdődött, miközben a radiálisa 0,18h-ig felér: 3,9 egység pontosan 0,3h-nál, a nyitó és a késői képen egyaránt, most mindkettőről eltűnt. Két gyanú megcáfolva, nem javítva: a Partfal két hajszálvonalnak látszik, de a keret bal huszada 39–48 egységgel sötétebb az azonos magasságú égnél 2,5-es legnagyobb oszlop-lépéssel — ez az éltelen rámpa, ahogy tervezték. A Permet vize 57–67 egységgel van az extrapolált ég alatt: halk, nem hiányzik. Védő: az e2e/acts.spec.ts mind a 42 állomáson méri a varratot és tíz alatt tartja. Mind a 42 most 2,3–6,9 között van, az Üllő saját hibája pedig 14,0-t mért előtte és 4,3-at utána, tehát mindkét oldalon szabad a levegő. A specificitás koherenciából jön, nem nagyságból: egy felhő felső éle ugyanekkora sorlépés, de az alakzat, és az alakzatnak oldala van, tehát nem tud minden oszlopot ugyanannál az y-nál elmozdítani. TALÁLAT MÁS FELVONÁSOKNAK: a késői képen a thin/ozone 17,0@0,337h és a rain/estuary 10,1@0,749h — egyik sem látszik a nyitó képen, amin a védő fut, tehát ma egyik sem bukik. Ez a 6.3 és a 6.6 első kérdése. HELYESBÍTVE a 6.3-ban: a két találat egyike sem reprodukálódik. A dokumentált módszerrel (jump, majd reset az állomás utolsó szekciójára) a thin/ozone 4,14@0,793h és a rain/estuary 2,74@0,312h, és mind a 42 késői kép 2,09 és 6,66 közé esik. Két időzítés lett kipróbálva, a keresztfade lefutása után és 120 ms-mal a reset után; egyik sem hozta vissza a 17,0-t. A bekezdés a DESIGN-ASCENT.md-ben áll marad, a helyesbítés alatta. UTÓLAG, EGY MÁSIK FUTÁSBÓL: a Permet mégis hiányzott, csak nem ott, ahol a fenti mérés kereste. A víz-kontra-ég összehasonlítás arra felel, hogy ott van-e a víz; arra nem, hogy van-e bármi a keret közepén. Új szám: soronkénti vízszintes szórás három sávban a játékmezőn — egy függőleges gradiensnek ez konstrukció szerint nulla, egy tarajnak vagy felhőnek nem lehet az. A Permet késői képe 2,05/0,95/6,75… a középső harmad 0,95, az első két felvonás legalacsonyabbja, miközben ugyanannak az állomásnak a nyitóképén 8,44. Az ok: ez a felvonás egyetlen egysíkú állomása, minden eleme a seaY-ra lóg, ami a végére 0,96h-ra süllyed — a víz úgy megy el, hogy nem lép a helyére semmi. Kapott scud-ot (két lapos fill, nem a gomolymező három rétege, mert a 3. állomás az a kép), ami a progressszel vastagszik, és a víz elvonulása 0,88h-nál megáll. Utána 2,71/1,46/10,40, a nyitókép érintetlen. A Partfalról szóló fenti felmentést ez a műszer megerősíti: az övé a felvonás leggazdagabb késői képe, 12,98/15,42/23,53."
+        },
+        {
+          "id": "6.3",
+          "title": "III. felvonás — Ritkulás",
+          "status": "done",
+          "commit": "7c709b6",
+          "note": "Hat állomás, mindegyik a saját összes szekcióján megnyitva — húsz keret —, plusz állomásonként huszonhat mintás söprés, hogy a kamera is mozogjon a világhoz kötött rétegek alatt. Két keret itt kevés: az Upper.ts-ben minden cameraY-hoz van kötve, a reset pedig mindig ugyanoda teszi a kamerát, tehát a nyitó és a késői kép csak a progressben tér el és vak mindenre, amit a parallax mozgat. A III. felvonás késői képe ráadásul nem repülhető: bukáskor újraindítja az állomást, és huszonhat kényszerített lépés a Futóáramlatot 0,55-ig, a Gyöngyházat 0,18-ig vitte — a vadászok előbb végeznek. EGY HIBA: a gyöngyházfelhő lencséje, ugyanaz az osztály, mint a II. felvonásé, egy lépéssel kijjebb — ott a téglalap vágta el a gradienst, itt a geometria. A lencse a saját tengelye mentén éltelen (a gradiens mindkét csúcsán nullára fut), keresztben viszont a ctx.ellipse zárta le, ahol semmi nem halványult el — és egy lencse másfél képernyő széles is lehet, tehát mindkét éle kilóg a keretből: oldal nélküli alakzat annyi, mint fillRect egy élő gradiensen. Mérve 4,36–4,53 egység 0,590h-nál, mind a négy szekción, és 4,0–4,9 a söprésben. A képen lapos szürke lencse borotvaéles tetővel, a névadó irizálás pedig nem látszott. Most radiális gradiens lapított koordinátarendszerben: minden irányban éltelen, lencsénként ugyanaz az egy gradiens (az allokációs plafon nem mozdul), és a szín végre a Motif.ts saját leírását követi — zöld a testben, rózsa a megvilágított él felé. A varrat mind a négy szekcióról eltűnt, az állomás legrosszabbja 3,28–3,50 és nem áll egy helyben; átlag 52,5→52,2, szórás 32,9→32,8, tehát a fényt nem költöttük el a javításra. KÉT DOLGOT A SZÁM MEGCÁFOLT: a Futóáramlat 5,7–6,4-es varrata 0,43–0,45h-nál a progresszel nem, a cameraY-nal viszont mozog — világhoz kötött jégcsík, az állomás névadója, és 11 km-en végig kell érnie az égen; a Világító felhők sötét ékei pedig a throat akadály két jégfala, nem háttérhiba. ÖRÖKÖLT SZÁMOK: a thin/ozone 17,0 és a rain/estuary 10,1 nem reprodukálódik — 4,14 és 2,74 —, mind a 42 késői kép 2,09 és 6,66 között van. ÚJ TALÁLAT A II. FELVONÁSNAK: az air/squall az ötödik szekcióján 12,97-et mér 0,279h-nál, ami a két felhőpad alsó éle, vagyis tartalom — és megnevezi a védő vakfoltját: a tíz alatti küszöb a nyitó képen azért teljesül, mert oda a pálya még nem ért oda. VÉDŐ: az e2e/acts.spec.ts mostantól mind a 42 állomást lefotózza a késői képén is, ugyanazzal a négy tartalmi állítással és ugyanazzal a tíz alatti küszöbbel, és a keretek a docs/screens/acts-late/ alá kerülnek."
+        },
+        {
+          "id": "6.4",
+          "title": "IV. felvonás — Keringés",
+          "status": "done",
+          "commit": "92d10c8",
+          "note": "Hat állomás, mind a tizennyolc szekciója, plusz állomásonként huszonhat mintás söprés. A VARRAT-MŰSZER ITT NEM TALÁLT SEMMIT: a legnagyobb koherens sorlépés az egész felvonásban 6,59 a tízes küszöb alatt, és mind a tizennyolc szekció és mind a százötvenhat söprésminta 2,3 és 6,6 közé esik. Ez a lelet lényege, nem a felmentés: a IV. felvonás hibája az ELLENTÉTES osztály, amire a suite szerkezetileg vak. EGY HIBA, a család harmadik változata — a II. felvonásban a téglalap vágta el az élő gradienst, a III.-ban a geometria, itt a geometria helyes volt és a KÉPEN KÍVÜL. A perem a h·(1,28 − 0,52·rise) helyen ül, tehát rise 0,538-nál lépi át a keret alját, a hat állomás pedig 0→0,12, 0,14→0,26, 0,30→0,40, 0,44→0,54, 0,58→0,68 és 0,80→1,00 értéket adott át. A Szabadesésnél a perem 1,28h-nál volt, 236 px-szel egy 844 px-es keret alatt, a légsáv teteje 1,197h-nál, még mindig 167 px-szel alatta. A bolygó, a sáv, a nappali oldal időjárása és a Földárnyék városai mind meg voltak rajzolva, minden képkockán, a semmibe. Pixelen mérve, nem következtetve: a keret alsó negyedének legnagyobb koherens sorlépése — a perem aláírása — 1,04 és 2,50 között van a Szabadesésen, a Sarkifényen, a Földárnyékon és a Törmeléköven, ami zaj; a Kútnál viszont 4,32@0,937h, a Rálátásnál 6,35@0,794h, pontosan ott, ahová a képlet teszi a peremet az adott progressznél (0,926h és 0,794h). A műszer három tizedesig egyezik az aritmetikával ott, ahol a bolygó a képen van, és nem talál semmit ott, ahol nincs. A FÖLDÁRNYÉK EGYETLEN VÁROST SEM RAJZOLT SOHA: nulla meleg pixel 0,88h alatt, mind a három szekcióján. A városok a peremtől 0,02–0,22 KÉPERNYŐNYIRE lógtak — ez a távolság csak egy olyan bolygóhoz illik, ami az alsó ötödöt kitölti, vagyis a Rálátáshoz —, tehát 1,07–1,12h-s peremmel mind a huszonhat elbukott a kliptesztet minden képkockán. A modul kommentje azt mondja róluk: „az egyetlen részlet, amitől ez hely és nem üresség”, „az első ember alkotta dolog az árokfenék óta”, és „soha nincs megemlítve”. Azért nem volt megemlítve, mert soha nem volt megrajzolva, az állomás pedig maga volt az üresség. AMI VÁLTOZOTT: hat új rise-érték (0,45, 0,53, 0,61, 0,69, 0,76), úgy megválasztva, hogy a légsáv a felvonás első képkockáján a keretben legyen, és a perem monoton emelkedjen, állomáshatáron lépés nélkül. A RÁLÁTÁS 0,8 + progress·0,2-ja ÉRINTETLEN — az az egy képe a felvonásnak, ami már jó volt —, és a számai ezt mondják: 6,17@0,846h és 6,33@0,794h a korábbi 6,17 és 6,35 ellenében — három tizedesig ugyanaz a magasság, a nagyság pedig azon a ±0,02-on belül, amit egy változatlan build ismételt futásai amúgy is adnak. A test most 0 a Szabadesésnél, a keret huszada a Földárnyéknál, tizede a Törmelékövnél és negyede a fordulónál. Minden, ami a bolygón ÜL, a v.h − surfaceY-ra van kiterítve — arra, ami a peremtől lefelé tényleg maradt a keretből —, nem a képernyő fix hányadára, tehát alacsony peremnél a horizont felé tömörül, ami egyben az, amit ugyanannak a talajnak a laposabb rálátása csinál. A perem helyét eldöntő aritmetika pedig egy limbY-ban lakik a korábbi három másolat helyett. UTÁNA: fény a keret alján a Szabadesésnél 1,26 → 5,35 a nyitóképen és 19,7 az utolsó szekcióra; a perem lépése a Törmelékövnél 1,50–2,50 → 2,93–4,72, 0,900–0,918h-nál, megint a képlet szerint; a városok 0 → 164–177. AZ V. FELVONÁS UGYANEZT A BOLYGÓT HASZNÁLJA ÉS NEM MOZDULT: a deorbit átlaga 12,6–12,9 → 12,8–13,1, a négy varrata 0,01-en belül; a nightside három tizedesig azonos, mert ott lit=0 és a nappali ág be sem lép. Az öt időjárásfolt viszont most mind a képen van egy helyett — ugyanaz a hiba, menet közben megtalálva; az V. felvonás saját átvizsgálása a 6.5. KÉT DOLOG MÉRVE ÉS NEM VÁLTOZTATVA, mindkettő a befagyasztott vizuális nyelv: a Sarkifény függönyei lógó lencséknek látszanak és nem lepedőknek, de ellipszis világos alsó éllel és semmibe fakuló koronával pontosan az, amit a Motif.ts leír és amit a kemény lapos vektor kér; és a nappali oldal időjárása kemény élű ellipszis — ugyanez a válasz, és egyben ezért nem látja őket a varratpásztázás: alakzatok, az alakzatnak pedig oldala van. VÉDŐ: az e2e/acts.spec.ts mostantól megszámolja a Földárnyék városait. Ők a kanári, nem a téma — a limbY-ról lógnak, mint minden más azon a bolygón, a legkeskenyebb sávjában ülnek, és melegek a játék legsötétebb keretén, tehát ők hagyják el elsőként a képet, ha a leképezés elmozdul, és őket a legkönnyebb megszámolni, ha nem. A küszöb hatvan, egy 164–177-es leolvasás alatt és egy nullás fölött."
+        },
+        {
+          "id": "6.5",
+          "title": "V. felvonás — Visszatérés",
+          "status": "done",
+          "commit": "371f559",
+          "note": "Hat állomás, mind a huszonnégy szekciója, plusz állomásonként huszonhat mintás söprés. A SUITE-NAK NEM VOLT MEG A MŰSZERE, és ez a futás lényege: minden eddigi találat egy tengelyen fekszik — élő gradiens kemény éllel, sorokat pásztázva, ahol minden oszlop egyetért. Az V. felvonásé a MÁSIK tengelyen fekszik, és a varrat-pásztázás szerkezetileg vak rá. Az új szám az oszloplépés, és kiugrásként jelentve, nem nagyságként: egy keresztbe fektetett radiális gradiens is minden oszlopában ugyanabba az irányba lép és sokat lép, de nem tud egy oszlopnál sokkal többet lépni, mint a tíz pixellel odébbieknél, mert rámpa — egy él pontosan ezt csinálja. HÁROM HIBA. (1) Az auróra hét függönye téglalap volt: 1,2 képernyő magas fillRect függőleges gradienssel, a saját hossza mentén éltelen, keresztben kétszer kemény, és mindkét éle a keretben a kép teljes magasságában — az Üllő fénysávja kilencven fokkal elfordítva. 11,07 egység koherens oszloplépés a nyitóképen és 10,05 a későin, egy második függöny 9,36-tal ugyanabban a keretben, miközben a mezőny 0,00–4,69; a sor-egyetértés a két legrosszabb oszlopnál 1,00 és 0,99, vagyis a keret minden mintavett sora ugyanarra lép. A varrata ugyanabban a pillanatban 3,05, a mezőny közepén. A képen lapos zöld csíkok kemény függőleges oldalakkal, abban az állomásban, amit a felvonás saját fájlja a legszebbnek nevez. Most radiális gradiens lapított koordinátarendszerben — a gyöngyházlencse alakja egy felvonással később —, a két kör a főtengely mentén eltolva, ami az az egy dolog, amit egy lineáris tudott itt és egy középre tett radiális nem: a fénypont a közép alatt marad, tehát a felfelé futó elhalás a hosszú. Utána 2,38 / 1,68 / 0,98 / 1,11, és 2,78 a huszonhat söprésminta legrosszabbja. A csúcs-alfa 0,06+h·0,05-ről 0,115+h·0,095-re, és a szorzó aritmetika: egy ellipszis fölötti kúp a fölötte álló henger harmada, a régi kitöltés viszont a teljes szélességében állandó alfájú lemez volt, tehát ugyanaz a szám fele annyi fényt tett le. Mérve: átlag 32,8 / 32,7 / 33,8 / 31,9 → 32,1 / 32,0 / 33,2 / 31,1, a hiányzó kétharmad egység a bolygó megvilágítatlan teste ott, ahol ég volt; a vízszintes szórás viszont FÖLMENT, 17,2/10,8/6,9 → 18,0/13,6/7,5, mert egy állandó alfájú lemeznek nincs. (2) A bolygó menetrendje egy lépés, egy fagyás és egy hiány volt. A Rálátás rise 1,0-n zár, ami 0,760h; az V. felvonás 0,86-on nyitott, ami 0,833h — a Föld 61 px-t hátrált a rajtól annak a felvonásnak az első képkockáján, amelyik beleesik, a kampány fordulóján. Az Éjszakai oldal csupasz konstanst kapott, 0,96-ot: 0,781h mind a négy szekcióján, 3590 px-en át mozdulatlan horizont. Az Auróra pedig egyáltalán nem rajzolt bolygót, három állomással azelőtt, hogy a modul saját fejléce szerint a perem elmegy. Három új menetrend, monoton a felvonáshatáron át is: 1,0→1,1, 1,1→1,26, 1,26→1,38. Mérve 0,758 / 0,745 / 0,732 / 0,719h a Letérésen a képlet 0,7588 / 0,7457 / 0,7327 / 0,7197-e ellenében, 0,662h az Éjszakai oldal harmadik szekcióján a 0,6623 ellenében, és 0,620 / 0,604 / 0,572h az Aurórán a 0,6198 / 0,6042 / 0,5729 ellenében — a műszer három tizedesig egyezik az aritmetikával mindenhol, ahol a perem rajta van a képen. A Plazmaöv most az első állomás perem nélkül, ahogy a fájl mindig is állította. (3) Az Éjszakai oldal viharai a vákuumban voltak. Hét cella a képernyő fix hányadán, 0,72h–0,96h, a horizont 0,781h: kettő a perem FÖLÖTT középpontozva (0,758h és 0,772h), egy harmadik 2 px-szel alatta 32 px-es fénysugárral, tehát átvirágzott rajta — minden képkockán. Ez a Földárnyék városai egy felvonással később és egy modullal odébb: pont az az osztály, amire a 6.4 javítása készült, abban az egy fájlban, amit nem ért el. Most a peremről lógnak, a saját fénysugaruk plusz a horizont keretbeli lelógása tisztásával — utóbbi a bolygó tulajdonsága és nem a képernyőé, w/21 a 2,6w-s sugárnál. A legfelső virágzás 39 px-szel a perem közepe alatt kezdődik, ami a szélesség bármely pontján legalább 20 px-szel a horizont alatt van, és mind a hét a keretben marad. A drawPlanet mostantól visszaadja, hova tette a peremet, mert a IV. felvonás három másolatos hibáját az V. úgy csinálta meg negyedszer, hogy egyszer sem származtatta. HÁROM DOLOG MÉRVE ÉS NEM VÁLTOZTATVA: a Plazmaöv 5,97-es oszloplépése a kampány második legnagyobbja és nem hiba — a harmincnégy nyomvonal-csíkból három két CSS pixelen belülre esik és egyetlen vonalzóval húzott vonallá áll össze a játék leghangosabb képében; ez rögzíti a védő küszöbét, nem javítanivaló. A Meteorpor 6,29–9,52@0,433h két felhőpad alsó éle, tartalom, ugyanaz a leolvasás, mint a Zivatar ötödik szekciójáé. És az ibolya korona MINDKÉT aurórában halott: a mix ki van számolva és nulla alfával rajzolva az V. és a IV. felvonásban is — ez színkérdés két felvonáson át, az egyik lezárva, és a befagyasztott vizuális nyelv teal plusz EGY MELEG második szín, az ibolya pedig egyik sem. A 6.8-é. VÉDŐ: az acts.spec mindkét passzon méri az oszloplépést és kilenc alatt tartja. Mind a nyolcvannégy keret 0,00–5,97, a söprés legnagyobbja 6,29, a hiba pedig 11,07-et mért — másfélszeres levegő alatta, negyedannyi fölötte, és semmi nem lett a küszöbhöz igazítva. A IV. FELVONÁS NEM MOZDULT: hat állomása 0,2-n belül a korábbi oszloplépésétől, ami egy változatlan build ismételt futamainak a szórása, és a Földárnyék továbbra is megszámolja a városait."
+        },
+        {
+          "id": "6.6",
+          "title": "VI. felvonás — Eső",
+          "status": "done",
+          "note": "Hat állomás megnyitva és megítélve mind a huszonnégy szekcióján, és minden szám öt, egy másodperccel eltolt képkocka átlaga — ez a módszer változása és a felülvizsgálat első találata: az act VI képei néhány lassan vándorló tömegből állnak, és egyetlen pillanat ebből érmefeldobás. Ugyanaz a Torkolat 1,42-t és 1,13-at mért két olyan buildon, ami csak abban tért el, hogy éppen hol állt a hordalék. Három hiba. (1) A LOMBKORONA fénysávjainak kemény teteje volt, és ez a kampány eddig mért legnagyobb éle. Minden sáv egy fillRect, amit KERESZTBEN futó gradiens tölt ki — a két szélén nullára fut, tehát pont az a két él éltelen, amit az V. felvonás után mindenki ellenőriz. A téglalap VÉGE volt az él: a kitöltés lefelé semmit nem változik, tehát a sáv egy pixel alatt kapcsolt be teljes erővel, négyszer, mind a négy ugyanabban a magasságban. 19,8 egység koherens sorlépés a nyitóképen és 40,9 a későin, pontosan a roofY-nál, szemben az Üllő 14,0-jével, amit a II. felvonás a legrosszabbjának nevezett. Most a lombkorona ELŐTT rajzolódik és a keret tetejéről indul, tehát nincs vége a képben, a tetőgradiens pedig elhalványítja ahelyett, hogy elvágná — a keret tetején 0,9 átlátszatlan, a levelek alatt egy harmad képernyővel nulla, vagyis pont az, amit több méter levél csinál a fénnyel. Mindkét szám eltűnt: a szonda legnagyobb nem-UI lépése azokban a képekben 5,4 és 0,9, és az is az akadály. A kép nem sötétebb lett, hanem világosabb (77,1/76,0/75,3/75,0 → 78,2/77,0/76,5/76,4), a középső harmad szórása pedig 19,5/20,6/19,7/19,4 → 23,6/24,3/23,5/22,8. A HARMADIK ORIENTÁCIÓ, és miért nem foghatta meg egyetlen védő sem: a seam azt kéri, hogy a játékmező MINDEN oszlopa együtt lépjen, a rib ugyanez oszlopokra fordítva — egy fénysáv a szélesség ötöde. Épült ebben a felülvizsgálatban egy részszélességű sorlépés-mérő, és el lett dobva: a raj, a banner vonala és a játék minden akadály-sziluettje 20–80 egységet mér rajta, tehát nincs küszöb, ami a hibát a képtől elválasztja. Ezeknek a passzoknak a specificitása a teljes keretre kiterjedő koherenciából jön, és egy lokális élnek ilyen nem lehet. Ráadásul az egész hiba 0,23h fölött élt, a játékmező pedig 0,25h-nál kezdődik, mert az állomás-banner az első öt másodpercben a keret felső ötödét birtokolja: A KAMPÁNY MINDEN KÉPKOCKÁJÁNAK FELSŐ ÖTÖDE MÉRETLEN, konstrukció szerint. Ez a felülvizsgálat nyitva hagyott vakfoltja; a bezárás módja egy BANNER_LIFE utáni passz, nem alacsonyabb y0. (2) A CIRRUS a Futóáramlat, amiből kitörölték a képet: az Upper.jet padlógradiens + éggradiens + az utolsó üllő bankként + nyírásvonalak, ez pedig ugyanaz üllő nélkül — vagyis két függőleges gradiens, aminek konstrukció szerint nulla a soron belüli szórása, plusz kilenc hajszálvonal. A középső harmad 0,92 a nyitón és 1,09 a későin, abban a felvonásban, ahol a következő legüresebb 3,86 és a Lombkorona 20,5. Ez a vákuum tartománya: a Letérés 0,80, a Sós határ 0,74 — csak azoknak az ÜRESSÉG a témájuk, ennek meg egy felhő a neve. Ráadásul fejjel lefelé állt ahhoz a felvonáshoz, amit nyit: a §10 szabálya, hogy a sűrű sík alul van és emelkedik, ez pedig 5,73-at mért fölül és 3,43-at alul, egyedüliként a felvonásban. Visszakerült az üllő — pont az, ami alatt a KÖVETKEZŐ állomás áll —, a ködvonalra ültetve, hogy az állomás során felemelkedjen a kép közepébe; a jég pedig uncinus lett: kampós, három hullócsík streakenként, ugyanazon a path-on, tehát kilenc streak továbbra is kilenc stroke. Öt-képkockás középső harmad: 1,33/2,83/2,56/1,14 → 1,38/2,89/2,97/1,86. A nyereség kicsi és majdnem teljesen az állomás második felében van, mert ott ér fel az üllő a középső harmadba — egy kampós filament két pixel vonal, akármilyen hosszú a farka, és sokkal többet mozdít a képen, mint ezen a számon. Ez jelentve van, nem elhangolva. (3) A TORKOLAT a Permet egy felvonással később, azzal a különbséggel, hogy a víz ÉRKEZIK és nem távozik. Minden a seaY-on lóg, a seaY pedig 0,68h-ról 0,18h-ra megy, tehát a késői képen a sóék — amit a fájl a képet vivő egyetlen részletnek nevez — kiment a keret tetején, alatta meg puszta gradiens: az alsó két harmad 0,84 és 3,11, szemben ugyanennek az állomásnak a 6,58/7,64-es nyitójával. Ez ellentmond a §10-nek abban a képben, ami az ÉRKEZÉS, és közvetlenül a VII. felvonás Sós határa előtt áll, ami szándékosan üres alul — két szomszédos állomás nem lehet mindkettő ugyanaz. A hiányzó sík a hordalék: egy folyótorkolat a saját medrét viszi lebegve, a plume az egyetlen dolog egy torkolatban, ami űrből is látszik, és ez az egyetlen elem itt, ami sosem olvassa a seaY-t. Lapított koordinátarendszerű radiális gradiensek, nem bank-lomok, mert egy víz alatti tömegnek nincs oldala. Mindkét száma mérésből jött: három plume 0,52h-ként a késői kép középső harmadát KÉT plume KÖZÉ ejtette (0,97 a 0,84-es alaphoz), egy majdnem két képernyő széles plume-nak pedig alig van soron belüli változása — sötétíti a vizet, de nem ad neki alakot. Hat darab, harmad képernyőnként, fél képernyő szélesen: 1,33. Ez elmarad a Permet saját javításának 1,45-étől, és ott is marad, mert az alternatíva egy zavaros kép a kampány legcsendesebb átadásában. KÉT GYANÚT A SZÁM MEGCÁFOLT: a Hegyipatak 15,9-e és a Torkolat 11,9-e 0,93h-nál az akadály-sziluettek — alakzat, aminek a befagyasztott vizuális nyelv szerint jár a kontúr —, és csak a két KÖZBÜLSŐ szekcióban jelennek meg, amiket egyetlen védő sem fotóz. Tudni kell róla, mielőtt valaki kiterjeszti a nyitó passzt minden szekcióra és a VI. felvonást a saját tartalmán buktatja el.",
+          "commit": "392218c"
+        },
+        {
+          "id": "6.7",
+          "title": "VII. felvonás — Hazatérés",
+          "status": "done",
+          "commit": "6817ef2",
+          "note": "Hat állomás, mind a tizennyolc szekciója, öt-képkockás átlaggal, és mellé az I. felvonás ugyanígy végigmérve — mert a VII. felvonás egyetlen nagy állítása az, hogy az utolsó képe az I. felvonás első képe, és ez éppúgy szám, mint festék. ÁLL: az Árokfenék 15,7/18,0/20,7 átlaga az I. felvonás árokfenekének 14,4–16,1-e ellenében, és a különbség pontosan az az arany, amit a befejezés hozzáad. MINDKÉT SÖPRŐ MŰSZER ÜRESEN JÖTT VISSZA: mind a tizennyolc szekció 3,37–4,90 a varraton és 1,41–2,40 az oszloplépésen, a tízes és a kilences küszöb alatt — a kampány legcsendesebb felvonása mindkettőn. Ez nem felmentés: az act VI megnevezte, mit nem tud elkapni egyik sem, és ebben a felvonásban is volt egy olyan. ELSŐ HIBA: a Napfényzóna öt fénytengelyének volt alja, harmadszor ugyanaz a mondat (Üllő, Lombkorona, ez). Mindegyik fillRect, keresztben futó gradienssel: a két oldala éltelen, lefelé viszont a kitöltés semmit nem változik, tehát a tengely egy pixel alatt kapcsolt ki azon a soron, ahová az end teszi. Söprés nem láthatta — a seam és a rib teljes keret-koherenciát kér, egy tengely a szélesség hetede —, az act VI részszélességű mérőjét pedig itt a raj nyomja el, ami ugyanazokban az oszlopokban 8–23-at mér. Úgy lett megmérve, ahogy a IV. felvonás pereme: rácélozva arra a sorra, amit az aritmetika megnevez, egyetlen tengely saját oszlopain belül, ugyanazzal a nyírással, amivel a kitöltés készült. A legnagyobb lépés azokban az oszlopokban a saját end-jére esett, három tizedesig — 5,13@0,563h a 0,564h ellenében, 6,46@0,714h a 0,714 ellenében, 7,18@0,704h a 0,705 ellenében —, 5,0–7,2 egység. Most radiális gradiens lapított koordinátarendszerben: a gyöngyházlencse és az auróra függönye élére állítva, a kör a saját tengelye mentén FÖLFELÉ tolva, tehát a fénypont a keret fölött van és a hosszú elhalás a lefelé futó. A kitöltés pontosan ott hal el, ahol a téglalap eddig véget ért, tehát a fény továbbra is az állomás saját menetrendje szerint fogy — ezt a felét egy alakjavítás csendben ki tudja törölni, ezért külön állítás őrzi. Minden csúcs eltűnt az end-ekről; ami az oszlopokban maradt, az a raj és a gyűrűk, ugyanazokon a sorokon, ahol mindig is voltak. A csúcs-alfa duplájára ment, és a szorzó aritmetika: a régi kitöltés a tengely közepén végig állandó alfa volt, ez pedig a keret tetején a csúcs 0,65-éről nullára fut az end-ig, ami 0,325 átlag. Az állomás három szekciója 87,3/85,4/82,5 átlagot mért előtte és 86,7/84,9/82,1-et utána — paritás, amire menni kellett —, a középső harmada 9,88/5,08/1,01 → 8,72/4,05/0,96: a fény most magasabban ül a keretben, ami az a hely, ahol a vízben a fény tényleg van. MÁSODIK HIBA: a Sós határ soha nem rajzolta meg azt, amiért van. A modul azt írja, hogy itt van az első élő dolog a felszín óta — plankton, ami fölfelé sodródik a süllyedő raj mellett —, a §11 átadó mondata pedig az, hogy ahol az édes sóssá válik, ott az arany élő formákban tér vissza; a keretben ehelyett a távolodó felszín, a kausztika és a tengeri hó volt. Ez a Földárnyék városai egy felvonással odébb: nem egy vonal, aminek nem kellene ott lennie, hanem egy dolog, aminek ott kellene lennie és soha nem volt. A középső harmada 2,78/1,72/1,80 — az a tartomány, amit a kampány ÜRES állomásai mérnek —, az utolsó felvonást nyitó képben. Most két sík, és a wrapY rátájuk maga a terv: a falling az, ami a felszín közelében élt dolgokból MARADT, és nulla közeli rátával a rajjal együtt süllyed, tehát alig mozdul az üvegen; a plankton él, és ami él, az tartja a saját mélységét (ráta 1 és kicsivel fölötte), tehát a raj megy el mellette. Egy közös path, fázison kívül lüktető harangok, síkonként egy fill — és MINDEN HARANGNAK KELL A SAJÁT moveTo-JA: nélküle az ellipse összeköti őket, és húszból egyetlen óriási sokszög lesz. Az első build pontosan ezt csinálta, és az állomás átlagát 84-ről 112-re vitte: a szám azt mondta, több lett a kép, a keret megmondta, mi történt valójában. Utána 3,15/2,10/2,34, változatlan 84,2/78,7/75,6 átlag mellett; a nyereség kicsi, és jelentve van, nem elhangolva. AMIT A SZÁM NEM ENGEDETT JAVÍTANI: ennek a hat állomásnak a fele menet közben a keret tetején ürül ki (a Sós határ mennyezete, az Alkonyzóna élvonala, a Napfényzóna tengelyei), az Alkonyzóna középső harmada 8,67-ről 1,32-re megy a saját szekcióin. De ez maga a felvonás: a fény mögötted van, és hat állomáson át fölfelé folyik ki a képből. A Torkolat üresedése azért volt hiba, mert a §10 az érkezés alsó felétől helyet kér; a §11 az ellenkezőjét kéri, és egy állomást nem lehet megjavítani abból, hogy a saját tervét követi. EGY MŰSZER VAKFOLTJA, MEGNEVEZVE: a Tengeri hó középső harmada 1,55 — kevesebb, mint a Mélytengeré (1,90) —, abban az állomásban, aminek az egész témája, hogy a keret tele van hulló szemcsével. A kép ott van; 166 darab egy-két pixeles szemcse tized alfával nem mozdít vízszintes-szórás-számot. A sávszórás arra felel, van-e a sorban ALAK, egy szemcsemező pedig nem alak. VÉDŐ, KETTŐ: az acts.spec megszámolja a Sós határ testeit a középső sávban (248/0/0 előtte, 601/332/256 utána, 150-es küszöb, és az első szekció bevallottan nem kanári, mert ott a raj is belelóg); és a tests/homecoming.test.ts, ami eddig nem létezett — a VII. felvonás hat backdropja soha nem volt unit-teszt alatt. Ugyanaz a szerződés, amit a II. felvonás kap, plusz a tengelyek alakja relációként (a doboz pontosan a kör, a kör a peremén nullára fut), külön állítás arra, hogy a hossz a progresszel fogy, és a Sós határ két populációja: 120 px kameramozgásra a plankton 110 px fölött mozdul az üvegen, a hó 40 alatt."
+        },
+        {
+          "id": "6.8",
+          "title": "Paletta-harmónia az egész körön",
+          "status": "done",
+          "note": "A SUITE-NAK NEM VOLT SZÍNMŰSZERE, és a §14 az egyetlen kritérium, ami a színezetről szól. Minden szám, amit ez a projekt valaha keretre fogott, luminancia: a frame() Rec.601-gyel egy számmá vonja a pixelt, mielőtt bármit csinálna, és a varrat, az oszloplépés és a sávszórás mind erre az egyre épül — hat éldefektre a helyes redukció, teal és arany megkülönböztetésére alkalmatlan. Új tools/palette.sweep.ts és tests/oklab.ts: negyven zónapaletta és negyvenkét motívum OkLCh-ban, ott ahol a kép valójában íródik. MIRE VALÓ A WASH, MÉRVE: a Renderer.drawBackground a motívum wash-ét a zóna gradiensének három stopjába hajtja, és a saját kommentje megmondja, miért — az I. felvonás négy zónapalettából festi hat szintjét, tehát két állomásnak, ami osztozik egyen, nincs más, amitől különbözne. A mérés szerint szó szerint csak ennyire való: az egyetlen wash a kampányban, ami valódi SZÍNEZET-eltolást visz, az I. felvonás osztott zónapárja — a Középéji áramlat 61 fokra és a Fényvonal 58-ra a saját mid-jétől. Utána minden felvonás minden állomásának saját zónája van, a mechanizmusnak nincs mit szétválasztania, és a harminc megírt wash tónussá szelídül: huszonnégy hat fokon belül van a saját mid-jétől és szinte teljesen világosságban mozdít. A HIBA: TIZENKÉT ÁLLOMÁS A SAJÁT ZÓNÁJA MID-JÉVEL MOS, BÁJTRA. Kettő az V. felvonásban (plazma, nucleus), öt a VI.-ban és öt a VII.-ben — kitöltött oszlop, nem megírt szín. A középső stop önmagával keverve aritmetikailag semmi (0,0000 OkLab-ban, szemben a másik harminc 0,0009–0,0371-ével), csakhogy a felső és az alsó stopot továbbra is húzza felé, tehát a színt nem adó tint tovább szedte a gradienstől a függőleges tartománya 10–16 százalékát. Az a tizenkettő laposabb vizet rajzolt, mint amit a zónatábla leír. EGYETLEN VÉDŐ SEM LÁTHATTA, és egyik sincs rosszul megírva: ennek a hibának nincs éle. Alakra helyes, tartományra rövid gradiens — pontosan az, amire a suite minden műszere vak —, a spread pedig az egész keretre számol, amiben mindig ott a banner, a HUD és a raj. Mostantól washAmount: 0. Egy állomásnak lehet, hogy nincs saját színe (a legtöbbnek tényleg nincs, mert a zónája MAGA a színe), de nem fizethet olyanért, amit nem kap. AZ ÜVEGEN MÉRVE, mind a nyolcvannégy keret, előtte és utána: a tizenkettő huszonnégy kerete kivétel nélkül szórást NYER, mediánban +0,95 és a plazmán +3,50, miközben az átlag alig mozdul (legnagyobb 1,40, medián 0,65) — a mélység visszajött, a fényerő maradt. A hatvan érintetlen keret |Δátlag| ≤ 0,10 és Δszórás −0,50…+0,20, ami egy újraépített, de változatlan build szórása, és ez adja a zajszintet, amihez a nyereséget mérni kell. A varrat és az oszloplépés 6,97 és 6,05 maradt a tízes és kilences küszöb alatt. KETTŐ A TIZENKETTŐBŐL NEM NYERT SEMMIT: a Tengeri hó +0,0 és a Mélytenger +0,2, mindkettő a zajon belül — a gradiensük 0,19-ről 0,14-re megy világosságban, alig volt mit visszaadni. Jelentve, nem elhangolva. A LEGKÖZELEBBI, AMIT BÉKÉN HAGYTUNK: a Zivatar wash-e 0,0063-mal mozdítja a saját mid-jét — épp elég közel a semmihez ahhoz, hogy tudni kelljen róla —, és azért marad, mert MEGÍRTÁK, nem lemásolták. A tests/palette.test.ts küszöbe 0,004, közte és a tizenkettő nullája között. MÁSODIK HIBA: az ibolya korona mindkét aurórában képkockánként kiszámolva, és olyan stopra adva, ami nem tudja megmutatni. Nem érvelve, hanem bizonyítva, mert egy nulla alfás stop nem magától értetődően tehetetlen: a canvas PREMULTIPLIKÁLT térben interpolálja a gradienst, tehát amit egy átlátszó stop átvisz, az annyi, amennyit a 8 bites kerekítés otthagy. Átlátszatlan égre 'lighter'-rel komponálva az ibolyát tiszta pirosra cserélve a keret legfeljebb 4/255-öt mozdult egy csatornán, a zöldre cserélve 2-t — szemben 15-tel egy 0,06 alfás kontrollnál. Soha nem volt az üvegen. Törölve, és a keret meg is erősíti: az auróra 26,8 → 26,7 átlag, az alulnézeti 31,1 → 31,0, a fenti zajszinten belül. Ha működött volna, HARMADIK színezet lett volna azokban a keretekben — az az egy dolog, ami a befagyasztott vizuális nyelvben nincs: teal és egy meleg, ott pedig zöld és semmi más. HÁROM DOLOG MÉRVE ÉS SZÁNDÉKOSAN NEM BÁNTVA: a nucleus a kampány egyetlen AKROMATIKUS állomása, minden deklarált színe 0,03 kroma alatt — az V→VI. átadáson ül, ahol a §14 szürkéskék esőt kér, tehát a szürkeség az ív, nem hiány. Az arany a VI. felvonáson át FÉL KROMÁN fut (0,057–0,076 az I. felvonás 0,105–0,118-a ellen), abban az egy felvonásban, aminek a hordozója víz; a §14 az aranyszikrát minden felvonás vizuális láncszemének nevezi, és ez az a felvonás, ahol a leghalkabb — kérdés annak, aki az ívet továbbviszi, nem ezen a bizonyítékon javítandó defekt. És a raj színe a II. FELVONÁSON BELÜL fordul, L 0,24 a Zivatarnál és 0,97 az Üllőnél: ez helyes és tudni kell róla, mert egy vihar teteje sötét, és egy sötét raj eltűnne benne — kontraszt a közeghez, nem palettatörés.",
+          "commit": "1c4d469"
+        },
+        {
+          "id": "6.9",
+          "title": "UI-letisztítás a shellen",
+          "status": "done",
+          "note": "A SUITE AZT TUDTA BIZONYÍTANI, HOGY MINDEN AJTÓ NYÍLIK, ÉS SEMMIT NEM TUDOTT ARRÓL, HOGY A FELIRAT OLVASHATÓ-E ÉS A GOMB ELÉRHETŐ-E. Új e2e/chrome.spec.ts: tíz shell-állapot — cím, cím rekorddal, térkép, térkép nyitott állomáslistával, keverőfiók, szünet, kényelem, eredmény, eredmény az Üllőn és a hangkártya —, és bennük minden szövegfutam AZ ÜVEGEN mérve. Nem számolva: két képernyőkép ugyanarról a képernyőről, egy a festett szöveggel és egy nélküle, és a kettő különbsége a tinta. A számított út végig hazudott volna, mert ez a shell radiális gradiensre, blur(8px)-es kártyára és három elmosott fényaknára fest, a szómárka pedig background-clip: text gradiens color: transparent-tel: a getComputedStyle a dobozok felére rgba(0,0,0,0) hátteret mond egy szülőről, ami sosem festett, a szómárkára pedig egyáltalán nem mond tintát. Futamonként Range-doboz és nem elemdoboz, mert egy két sorba tört címsor doboza tartalmaz egy üres sarkot, ami épp azt a hátteret hígítja, ami előtt a második sort olvassák. Kontroll a modell ellen: az analitikus kompozitálás 4,44 / 3,22 / 2,87-et jósolt oda, ahol a panel 4,47 / 3,22 / 2,89-et mért. HÁROM DOLOG BUKOTT MEG. (1) Az üvegen lévő 120 futamból 31 a WCAG AA alatt, egy tucat foknál: a legrosszabb a rekordsor elválasztó pontja 1,91:1-en — az nem írás —, aztán a térkép ÁROK-felirata 2,89, az állomásmélységek 3,22, a felvonásfeliratok a térképen 3,45, a szemöldök 3,85, az állomásjegyzetek 4,0, a kezdőképernyő mottója 4,17. (2) A 65 élő kontrollból 35 nem éri el a 44 pixelt. A két sarokgomb 40×40 — és ez az a kettő, amit futás közben egyáltalán megérint valaki —, minden kapcsoló 62×32, a tíz hangerőfader pedig 239×16: a játék egyetlen HÚZOTT kontrollja volt a shell legkisebb célpontja, kétszeres különbséggel. (3) A shell harminchatféle színnel írt szöveget: öt majdnem-fehér két százalékon belül egymástól, és nyolc átlátszóság ugyanabból a halványkékből 0,42 és 0,6 között. Harminchat tinta nem hierarchia — 0,5 és 0,55 között nincs, aki különbséget lát, és amit nem lehet látni, azzal nem lehet mondani semmit. A VÁLASZ NEM HALKÍTÁS, HANEM TÖRLÉS. Három tintafok maradt (--ink, --ink-2, --ink-3), plusz az akcentus, az arany, a figyelmeztetés és a --unlit; a padló ott van, ahol a leghalkabb fok még AA fölött van a shell legsötétebb mezején, mérve 5,2:1 vagy jobb mindenhol. A rangsort a méret és a súly viszi, nem a láthatatlanság. A --unlit a szándékos kivétel, és a mérésben is annak látszik (2,13:1): a térkép egy el nem ért felvonást hiányként rajzol, az nem olvasnivaló, és a WCAG a letiltott kontrollt ugyanezért engedi el. A műszer nem is kapuzza, csak kiírja — mert kívülről a „szándékosan halvány” és az „elfelejtett” egyformán néz ki. A MEZŐ, AMI NEM A MIÉNK: az eredményképernyő élő vízen ül, és a tintáját mindig valaki az I. felvonás árkán nézte. Az Üllőn — a II. felvonás zivatartetején, ahol a 6.8 a raj világosságát L 0,24-ről 0,97-re fordulni mérte — ugyanaz a három futam 0,4 arányt vesztett: 4,47 → 4,05. Most 5,42 ugyanott, és a mérés mostantól mindkét vízen megy. TÖRÖLVE: a tíz százalékkijelző a faderek mellől (a csúszka állása maga a kijelző, a beállított dolog HALLHATÓ közben — a fiók pont ezért létezik —, és az aria-valuetext továbbra is kimondja a számot annak, aki hallgatja a felületet és nem nézi); a fader fölötti külön kapcsolósor (a kapcsoló és a fader most egy sorban, mindkettő 44 magas, és a sor nyolc pixelt nőtt, nem harmincat); és a .ui-studio, a stíluslap 170 osztálya közül az egyetlen, amit soha semmilyen kód nem nevez meg. A típusskála 15 méretről 12-re ment, a térképképernyőn 10-ről 6-ra: a 12,5 a 13 mellett, a 11,5 a 11 mellett és a 8,5 a 9 mellett nem fok, hanem fél pixel. BUDGET, négy leletből: nulla AA alatti futam, nulla 44 alatti kontroll, legfeljebb nyolc tinta és tizenkét típusméret.",
+          "commit": "7db210e"
+        },
+        {
+          "id": "6.10",
+          "title": "Részecske és hang szinkron a fizikai interakciókra",
+          "status": "done",
+          "commit": "ede094e",
+          "note": "Új mérő: e2e/response.spec.ts a SimEvent-unió minden tagját elsüti a saját állomásán, és egyszerre olvassa mindkét csatornát — a képet a keret saját mozgása ellen (szüneteltetve, tizenkét kontrollképkocka adja a padlót, a jel a legrosszabb 96 pixeles blokk változása), a hangot nyolc ismétléssel és saját kontrollablakkal, mert az ágy Poisson-ütemezéssel oszt végig. A nullolvasat 0,82×: pontosan ennyit mér az a három jel, ami semmit nem rajzol, és ez teszi olvashatóvá a többit. A lelet az újraindítás: a III–VI. felvonásban a bukás nem futamot zár, hanem az állomást kezdi újra — negyvenkettőből harminc állomáson ez a bukás definíciója —, és erre sem a kép, sem a hang, sem a kéz nem válaszolt semmit. Az esemény ráadásul a reset ELŐTT íródott ki a régi kamerapozícióval, tehát bármi, ami megrajzolta volna, a képen kívülre esett volna. Most a reset után megy ki a raj belépési vonalával, a válasz pedig az állomás saját felirata (ez a játék meglévő mondata arra, hogy „ez az állomás, innen”), alatta három záródó gyűrű a tracer színében, egy skálán ereszkedő szinuszhármas az objectives sávon — nem harangokkal, mert harang az, amit megütnek, és nem a danger sávon, hogy halkra vett vadászok mellett is hallható maradjon —, és kétimpulzusos haptika, hogy a kéz meg tudja különböztetni egy állomás nyitásától. 0,00 → 10,50× a padló fölött 36 képkockán át, 0,00 → 5,00 hang. Második lelet: a megszakadt sorozat „lehűti a sínt” sosem hűtött semmit, mert a RunState a jelentéssel egy lépésben nullázza a streaket, tehát a fade egy már nulla melegséget szorzott — a sín saját oszlopaira célzott mérő szerint 0,051 a saját 0,054-es zaja ellen, most 4,41 a 0,10 ellen. Törölve a SimEventType 'streak' tagja, amit soha senki nem küldött és soha senki nem hallgatott. Jelentve, nem javítva: a veszteség-puff hallatszik, de nem látszik (lemaradó 0,82× = a semmi olvasata, szikla 1,33, zsákmány 1,58, szemben a harapás 3,40-jével és a raj beolvadásának 3,03-ával), és a zóna mindkét csatornán néma, mert a határt a paletta-átúszás és az ágy folyamatosan válaszolja. Az ujj rendben van: 3,2 hang gesztusonként nyugodt tempóban és 2,1 egymás után indított gesztusoknál, tehát a 0,16 másodperces limiter egyetlen érintést sem eszik meg. Új védő: tests/response.test.ts az uniót mindkét switch ellen tartja minden commitban, és a tuning-söprés mostantól az új hangot is méri a skálaszabály ellen."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Szerkesztői kiemelés",
+      "goal": "Legyen mit megmutatni az App Store és a Play szerkesztőinek.",
+      "criteria": [
+        6
+      ],
+      "tasks": [
+        {
+          "id": "7.1",
+          "title": "Az első kilencven másodperc ütemezése",
+          "status": "done",
+          "note": "A SUITE MINDEN SZÁMA A JÁTÉKRÓL SZÓLT, EGYIK SEM A SORRENDRŐL. Végigrepülhető-e egy fal, fizet-e a tudás, ugyanaz-e egy állomás száma, mint a szomszédjáé — mind a negyvenkét állomásra megvan, és egyik sem arra a kérdésre válaszol, amit egy store-szerkesztő tesz fel: abban a másfél percben, amit végignéz, mit mutat a víz, MIKOR mutatja, és van-e benne szakasz, ahol nem történik semmi új. Új mérő: tests/opening.ts a jelölésekkel (egy jelölés az ELSŐ alkalom, amikor a játékos olyat lát, amit még nem — archetípus a keretbe úszik, gyűrű megy be, hal vész el, állomás vált), tools/onboarding.sweep.ts a jelentés, tests/onboarding.test.ts a védő. Első előfordulás, mert a második szikla nem tanít semmit, tehát a lényeg a RÉS, és semmilyen összesítő — jelölés/perc, letisztított szekció, pontszám — nem tudja megkülönböztetni azt a kilencven másodpercet, amiben tizenöt dolog van az első húszban, attól, amiben nyolc egyenletesen. AZ ABLAK, ÖT MAGON: tizenöt jelölés, és tizenhárom közülük az első 38 másodpercben. A kérés 0,3 mp-kor már az üvegen (a szaggatott gyűrű az egyetlen, aminek a mellőzése futamot zár, tehát ez az első dolog a képen), az első gyűrű 8,3–10,9-kor megy be, az első szekció 9,9–12,3-kor zárul, az első akadály 12,8–15,6-kor ér a keretbe, az első opcionális gyűrű 15,2–18,2, az első veszteség 24,3–33,2, az első szikla 32,4–34,9, a szűkület 36,7–41,2. UTÁNA 29,1 MÁSODPERC, AMIBEN SEMMI NEM ÚJ (37,7 → 66,8), majd az állomásváltás 65,5–70,5, a zóna 78,1–82,1 és a lánc 78,8–82,7. Az ablak tehát elöl sűrű, hátul sík, és a legkevésbé új pillanatával ér véget. AZ ABLAK AZ EGÉSZ FELVONÁS ELLEN: ugyanaz a kéz 164,4 másodpercig repül és a 3. állomáson viszi el a közeg, tehát a kilencven másodperc egy teljes I. felvonás első 55 százaléka; az állomások 66,8-nál és 132,5-nél adnak át; az első állócsatorna 134,4-kor jön (3. állomás), az első vadász pedig egyáltalán nem, mert a LEVELS a 6. állomásra teszi. A KÖVETELÉS NÉLKÜLI VÍZ: az ablakban a képkockák 14,6 %-án nincs a képen se akadály, se gyűrű, se vadász, a leghosszabb ilyen szakasz 7,5–8,2 mp — ez a BREATH, ami minden állomás végén ott van —, az egész felvonáson pedig 12 %. Vagyis a pihenő egyenletesen van elosztva, nem az indítás sajátja; ezt majdnem az ellenkezőjének mértem, mert az emptyPct először a KERETTEL osztott és nem a ténylegesen lefuttatott képkockákkal, és így a nyitást 6,6-szer üresebbnek mondta volna a felvonásnál. AKI MÉG NEM NYÚLT HOZZÁ: a víz nélküle is tanít — 0,5-nél gyűrű a képen, 13,6-nál BEOLVAD egy gyűrű, 15,6-nál zárul egy szekció, mozdul a szorzó, és 33,7 másodperc után viszi el a közeg (sweptAway, nem szikla). Tutorial nélkül is érthető: erre ez a szám. AMIT NEM VÁLTOZTATTUNK, ÉS MIÉRT: a felvonás tanítási sorrendjét. A LEVELS saját kommentje kimondja („mi van még a vízben: semmi → sodrás → vadászok”), a mérés pontosan ezt találta, és a söprés SEMMILYEN változtatást nem indokol — az ablakot mozgalmasabbá tenni annyi lenne, mint a tanítási görbét demóra cserélni, ami az 1. kritérium ellen megy. Helyette védő: a védett szerződés az, amit a nyitásnak tennie kell ahhoz, hogy olvasás nélkül érthető legyen — a kérés azonnal az üvegen, a válasz negyed percen belül, egy vízváltás az ablakon belül, és semmi 12 másodpercnél hosszabb üresség.",
+          "commit": "32004a0"
+        },
+        {
+          "id": "7.2",
+          "title": "Store-képek újralövése",
+          "status": "done",
+          "note": "A TIZENKÉT KÉPKOCKA ÚJRALŐVE, ÉS KÉT HIBÁVAL JÖTT VISSZA, AMIT CSAK MEGNÉZÉSSEL LEHETETT MEGTALÁLNI. (1) A SOROZATJELVÉNY A HANGGOMB ALATT VOLT. A drawHud a jobb oldali oszlopot y+58-ra tette, hogy elkerülje a szüneteltetés gombot — igaz volt, amíg az volt egyedül a sarokban, és attól a naptól kezdve hamis, hogy a keverőgomb alá került. Azóta minden olyan futamon, amiben van sorozat, a ×1.00 egy hangszóró-ikonon keresztül rajzolódott, és így van benne a repóban lévő store-képekben is: a 03-rock és a 06-split képen a jelvény két fele kilóg a gomb két oldalán. EGYIK MŰSZER SEM LÁTHATTA: a chrome.spec a DOM saját téglalapjait méri és soha nem a vásznat alattuk, az acts.spec az üveget olvassa és semmit nem tud arról, mi van rárétegezve — a két réteg két külön számhalmazból rendezi magát, és a projektben semmi nem hasonlította össze a kettőt. Javítva: HUD_COLUMN_TOP = 10+44+8+44+8 = 114, ami a stíluslap saját összege ugyanarra a vonalra (a .ui-mix fiók is erre van kitűzve, mert egy fiók, ami a saját gombja fölött nyílik, ugyanaz a hiba egy réteggel feljebb). Új védő a chrome.spec-ben, téglalapokkal és nem pixelekkel — mindkét réteg ugyanahhoz a jobb szélhez igazít, tehát ha az oszlop a legalsó gomb alatt kezdődik, akkor bármit is festenek, nem metszhetik egymást: 114 a 106 ellen, 8 pixel levegő. (2) A 03-ROCK KÉPEN NEM VOLT SZIKLA. A felvétel fix 11 másodpercnél készült, a 7.1 söprése pedig megmondta, miért nincs rajta semmi: a kampány első akadálya 12,8–15,6 másodpercnél ér a keretbe, tehát a szikláról elnevezett képet egy-négy másodperccel az előtt lőttük, hogy szikla létezett volna. Faliórára ezt nem lehet tudni, feltételre igen: most addig játszik a bot, amíg egy blob KÖZÉPPONTJA a keret 0,30 és 0,55 magassága közé nem ér — ott már érkezik rá a raj, és a felső negyed a banneré. HARMADIK, MELLESLEG: a capture.spec 09-surface állítása versenyfutás volt. A kampánybeli I. felvonás befejezése átad a II.-nak, az átadás új futamot indít, aminek a completed-je megint hamis, és a 4600 ms-os várakozás pont akkora, hogy melyikre esik az olvasás, az fej vagy írás. A KÉP mindig jó volt; csak az állítás vesztett. Az olvasás a várakozás elé került. A tizenkét kép mostantól a kész hangulattal és olvasható jelvénnyel jön vissza.",
+          "commit": "32004a0"
+        },
+        {
+          "id": "7.3",
+          "title": "Szerkesztői checklist végigmérve",
+          "status": "done",
+          "note": "Új docs/EDITORIAL.md: amit az App Store Today-fül és a Google Play Editors' Choice ténylegesen kér, soronként, és mellette a szám, amit ez a repó mögé tud tenni. Egy verdikt itt vagy szám, vagy fájlnév, vagy a szó, hogy `unmeasured` — negyedik fajta nincs —, és a hiányok a szakaszuk TETEJÉN vannak, mert az a checklist, ami a bukásait a „megjegyzések” alá teszi, marketinganyag. A LELET: a shell hatvanöt élő kontrolljából harmincöt van Google 48dp-je alatt, és mind a hatvanöt pontosan 44-en áll, mert mind a hatvanöt egyetlen stíluslap-változóból mérezik. Apple-t nulla ráhagyással hozzák, Google-t pontosan négy pixellel hibázzák el, és az Editors' Choice a Google programja. A 6.9 kommentje ezt fordítva okolta meg — a kisebbet nevezte „annak, amit mindkét platformon hozni kell”, ami a szükségesre igaz és az elégségesre hamis. MEGMÉRVE, MENNYIBE KERÜLNE, ÉS NEM KÖLTVE EL: a --reach 48-ra állítva tizenkét pixelt ad a körképernyő alsó blokkjához, és a BEGIN feliratot leviszi a hajtás alá (a gomb alja 875,7 egy 844-es kereten) — kiderült közben, hogy az a gomb 44-en IS húsz pixellel lóg túl nyugalmi helyzetben, és ezt eddig egyik műszer sem mondta ki, mert a cenzus csak a teljesen képen kívüli dobozt utasítja el. A döntés rám lett bízva, és 44 marad: a 48 a Material ajánlása és nem a Play követelménye, a 44 pedig az a szám, amit a két bolt átvizsgálása ténylegesen kikényszerít; a térkép függőleges ritmusához nyúlni pedig kompozíciós döntés, ami saját mért menetet érdemel, nem egy zöld verify utáni igazítást. Tehát visszaállítva 44-re, és a hiány mostantól minden futásban kiírt szám ([shell reach48]), nem emlék. Kiírja a legkisebb élő kontrollt is, mert az a cenzus, aminek az egyetlen kimenete „semmi nem volt a vonal alatt”, nem tudja megkülönböztetni a ráhagyással bíró shellt attól, amelyik pontosan a vonalon ül — és pontosan ezt csinálta. MÁSIK, KIMONDVA ÉS NEM MÉRVE: soha senki nem futtatott VoiceOvert vagy TalkBacket ezen. A shell valódi DOM-gomb 41 aria-attribútummal és a documentElement.lang követi a nyelvi beállítást, tehát van esélye; a játék maga vászon, és azt egyik sem olvassa — ez a műfaj tulajdonsága, nem javítandó defekt. MINDEN MÁS SZÁMMAL ÁLL: indulás 34 ms a címképernyőig és 328 ms a mozgó halakig hidegen (20 és 277 melegen) egy 3000 ms-os budget ellen, előtte 11 089 ms ident és hangkártya szándékosan a budgeten kívül; nulla hálózati kód a src-ben; 120 szövegfutam az üvegen nulla AA alatt; 65 kontroll nulla 44 alatt; öt valós kivágás; 37 B/képkocka nyitóképen és 109 a legterheltebben; fix dt 30–144 Hz-en; 42 állomás mindkét képén és 7 befejezés minden mozdulatán lefotózva.",
+          "commit": "32004a0"
+        },
+        {
+          "id": "7.4",
+          "title": "Store-szöveg és kulcsszavak",
+          "status": "done",
+          "note": "Új docs/STORE.md: minden mező, amit a két store kér, a saját karakterhatárára megírva, mindkét nyelven, és a hossz MEGSZÁMOLVA a mező mellett — egy négy karakterrel hosszabb alcím nem szöveg, hanem elutasítás. Alcím 21/30, promóciós szöveg 150/170, kulcsszavak 98/100 (egyszavas tagok vesszővel, szóköz nélkül: a store maga építi a kifejezéseket, tehát a `stress` és a `relief` külön többet ér, mint együtt; és semmi nem ismétel szót a névből vagy az alcímből, mert azok már indexeltek), Play rövid leírás 74/80, a törzs 1522 karakter angolul és 1535 magyarul. Mellette az, amit a két kérdőív kérdez, és amiért mindegyik válasz BIZONYÍTHATÓ: nincs adatgyűjtés, mert nincs hálózati kód; nincs harmadik féltől SDK; nincs fiók; nincs IAP; nincs reklámazonosító. A korhatárnál a becslés 9+ és le van írva, miért: a vadász egyedeket vesz ki a rajból, ez a bukás látható formája, és a „semmilyen erőszak” válasz erre nem lenne igaz — vér, test és pontszám nélkül sem. A LELET: A JÁTÉKNAK KÉT NEVE VOLT. A címképernyő BEYOND CURRENTS-et mondott, öt store felé néző sztring viszont TIDE-ot — a <title>, az apple-mobile-web-app-title, a manifest name és short_name, és az ikon aria-label-je. Ez a négy nem belső név: ez az, amivel egy kezdőképernyő-ikon fel van iratozva, és amit egy store-lista örököl, tehát a telepített build TIDE felirattal ült a kezdőképernyőn, aztán BEYOND CURRENTS-szel nyitott. Ezt a fázis nem döntötte el magától, hanem kérdezte; a VÁLASZ TIDE, és a wordmark ment utána: a StringTable.title mindkét nyelven TIDE, és ez az egyetlen sztring a táblában, ami nincs fordítva, mert egy név mindkét nyelven név. Semmi más nem mozdult, mert az öt sztring végig jó volt. A címképernyő jobb is lett: a négybetűs wordmark a két halvány gyűrű közepébe ül, ahol a kétsoros nem ült. A NÉGY BETŰ ÁRA LEÍRVA, NEM ELHALLGATVA: a `tide` gyakori angol szó, a névmező pedig a legerősebb keresési jel, amije a két store-nak van — Apple-nél ezt az alcím és a kulcsszómező viszi el (TIDE 4/30 plusz „You control the ocean” 21/30), a Play-en viszont nincs alcím, ott a cím maga viszi a szavakat: TIDE: You Control the Ocean, 27/30. Ugyanazok a szavak, mindkét store-on abban a mezőben, ami ott létezik. A képsor is meg van vágva: tizenkettőből nyolc, sorrendben és felirattal, plusz miért éppen az — és négy kimarad, mert két címképernyő, egy üres nyitókép és egy bukásképernyő négy olyan kocka, ami semmit nem ad el.",
+          "commit": "32004a0"
+        },
+        {
+          "id": "7.5",
+          "title": "Az elsődleges gomb az üvegen",
+          "status": "done",
+          "note": "A SUITE-NAK NEM VOLT MŰSZERE ARRA, HOGY AMIT MEG KELL NYOMNI, AZ A KÉPERNYŐN VAN-E. Az offscreen mező meg volt számolva és sosem volt kapu, és a kommentje meg is indokolta: a térkép magasabb egy telefonnál és görgetődik, szándékosan — ami igaz egy állomáslistára, és hamis arra az egy kontrollra, amiért a képernyő létezik. Az egyetlen szám, ami erről valaha megszületett (875,7 egy 844-es kereten), egy viewportról és egy profilról szólt, és ez a család LEGENYHÉBB esete. Négy üvegen és két profilon: 390×844-en friss profillal a gomb fent van 23,3 pixel ráhagyással, zárt kör után 23,7-tel lóg le; egy 375×667-en FRISS profillal is 76,4-gyel, zárt kör után 123,4-gyel; fekvőben 400,2-vel; 430×932-n fent. Vagyis a térkép minden olyan telefonon a saját elsődleges gombja nélkül nyílik, ami rövidebb a tesztelt egynél, az első indítástól kezdve. PIXELT NYESNI NEM LEHETETT RÁ: az SE-hez 123 kell, és az egyetlen engedő blokk a kép — a két kapcsoló ujjcélpont, a felvonás próza —, aminek a szélessége a magasságából jön, és aminek minden szélességpixele az állomásnevek betűmérete; 400-ról 277-re vinni annyi, mint a gombot a térképpel kifizetni. A javítás ezért szerkezeti: a térképképernyő elsődlegese position: sticky, bottom: 0. A nulla nem hiányzó safe-area tag: a görgetőszelvény a .ui saját paddingje — húsz pixel plusz az alsó kivágás — levonása UTÁN kezdődik, tehát a kitapadt pirula pontosan abba a csatornába ül, amiben az oszlop alja ülne, és aki megismételné itt a számtant, két csatornával feljebb ültetné. 0, 34 és 48 pixeles kivágáson mérve a ráhagyás mindháromszor pontosan 20. Magától elenged: 150 pixel oszlop van alatta, tehát a görgetés végén a saját helyére ül vissza, és a három gomb 632,7 / 718,3 / 776,3 — semmi átfedés. AMIBE KERÜL, MEGMÉRVE ÉS NEM KIMONDVA: hét szövegfutam kerül a gomb mögé, ami a tintacenzus harmadik kivétele lett a képen kívüli és a szándékosan halvány mellett, kiírva és nem elhallgatva — egy sor a gomb saját átlátszatlan festékében mindkét felvételen 1:1-et mér, ami nem olvashatatlan típus, hanem kicsúszó sor. Kontrollból egyet takar: a második kapcsolóból 44-ből 17,3 marad szabadon, teljesen eltemetve egy sincs, és ez új kapu. Az új mérő 32 elsődlegest néz meg — nyolc képernyő négy üvegen —, nulla lóg le, a legszorosabb 20 pixel ráhagyás. A 11-circuit.png újralőve: a repóban ülő store-képen a CONTINUE félbe volt vágva. Mellékesen a 7.3 blokkolója is megszűnt: --reach 48-on a gomb NEM mozdul (776..824 mindkettőn), az oszlop 1031-ről 1039-re nő, a második kapcsoló 17,3-ról 13,3-ra fogy — az EDITORIAL §1.2 ezzel át van írva.",
+          "commit": "29980c7"
+        }
+      ]
+    }
+  ],
+  "audit": [
+    {
+      "criterion": "Fixed timestep akkumulátorral",
+      "verdict": "ok",
+      "note": "src/core/GameLoop.ts — fix dt, render alpha, maxSteps, akkumulátor-ürítés fókuszváltáskor. Mérve 30–144 Hz-en: az eltérés sehol sem több egy lépésnél, a maxSteps sosem telik be."
+    },
+    {
+      "criterion": "Zero-GC a játékciklusban",
+      "verdict": "ok",
+      "note": "Újramérve melegen, botpilótával és élő futamon: a teljes út 37 B/képkocka nyitóképen és 109 a legterheltebben; a szimulációs fele 20 és 65. Kb. 6 KB/mp a legrosszabbon, azaz percenként ha egy kis GC. Két védő tartja: e2e 400 B/képkocka plafon, és tests/allocation.test.ts a npm test-ben."
+    },
+    {
+      "criterion": "DPR / retina skálázás",
+      "verdict": "ok",
+      "note": "src/main.ts:499 — clamp(dpr, 1, 2) egy mért képbudgettel szorozva. 3×-on ez 0,67 natív arány és 1,33 CSS px-es él az 1,0 helyett; a natív 3× viszont 31,6 ms/képkocka lenne. A clamp árazott döntés, nem feledékenység."
+    },
+    {
+      "criterion": "Web Audio: bufferek és rampák",
+      "verdict": "ok",
+      "note": "AudioBuffer-ek, createBufferSource, exponentialRampToValueAtTime végig az engine-ben — és mostantól mérve is. A negyvennyolc .value = írás mind konstrukciós; a tizenöt tartott paraméterre a StubParam külön számolja a közvetlen írást, és a tests/loops.test.ts nullát követel egy teljes végigjátszás után."
+    },
+    {
+      "criterion": "Kattanásmentes loopok",
+      "verdict": "ok",
+      "note": "Egyetlen loopoló puffer van a játékban, a közös barnazaj, és nem záródott körbe: a varrat 4,5-szerese volt egy rendes mintaközi átmenetnek és 3,2 dB-lel emelkedett a puffer saját leghangosabb ezredmásodperce fölé 8 kHz-en, 0,85 Hz-enként, minden felvonásban. Az integrátor állapota most körbeér; a varrat 0,84× és −2,2 dB. Teszt őrzi."
+    },
+    {
+      "criterion": "Harmonikusan pitch-elt események",
+      "verdict": "ok",
+      "note": "Fél másodpercnél hosszabb hangolt hang a skálán van, ennél rövidebb szabad — mindkét fele állítva. Mérve mind a nyolc ágyon: az 1445 hosszú hangból 745 lógott le 25 centnél messzebb, átlag 31 centtel, most egy sem, átlag 0,2 centtel. A textúra érintetlen: az I. felvonás vize továbbra is több száz különböző magasságot szól öt perc alatt."
+    },
+    {
+      "criterion": "Audio unlock",
+      "verdict": "ok",
+      "note": "A kézfogás állapotgépét a smoke.spec.ts már fedte; ami hiányzott, az annak a bizonyítéka, hogy a futó gráf tényleg szól. Az AudioEngine.voicesPlayed a mixer-sávot elérő hangokat számolja, a metrics() kiadja, és az e2e/unlock.spec.ts erre állít — hidegen néma, koppintás után hangos, háttérből visszatérve a játékossal együtt tér vissza."
+    },
+    {
+      "criterion": "Pointer Events",
+      "verdict": "ok",
+      "note": "src/input/InputController.ts — pointerdown/move/up, preventDefault a tetején, és mostantól a lap elvesztése is felemeli az ujjakat, mert egy elvett touch nem mindig érkezik pointercancelként. Kilenc éleset tesztje a npm test-ben."
+    },
+    {
+      "criterion": "touch-action: none",
+      "verdict": "ok",
+      "note": "Szándékosan NINCS a body-n: az ős-láncon metsződik és megölte a görgetést a shellben. A canvas maga deklarálja. Ezt nem javítjuk."
+    },
+    {
+      "criterion": "Safe area",
+      "verdict": "ok",
+      "note": "Mérve, öt valós kivágás-geometrián, és két hiba javítva (shell-margó fekvőben, mixer fiók szélessége). A geometria egy helyen van deklarálva: négy custom property a :root-on, mindenki var()-t olvas — ez tette egyáltalán mérhetővé."
+    },
+    {
+      "criterion": "Haptika",
+      "verdict": "ok",
+      "note": "Tíz nevesített cue egy szótárban, egy driver-varrat mögött. A cue ms-mintázatot és natív súlyt is visz, tehát a csere egy setHapticsDriver() hívás, nem átírás. A webes driver az iOS-en no-op — ezért kellett a másik nyelv is."
+    },
+    {
+      "criterion": "PWA offline",
+      "verdict": "ok",
+      "note": "Javítva és újramérve: a hideg telepítés utáni első repülés is indul, a bundle a cache-ből jön 200-as text/javascript-ként. A worker a build asset-listáját precache-eli, ignoreVary-vel egyezteti (Vary: Origin) és a shell-fallbackot csak navigációra adja."
+    },
+    {
+      "criterion": "Indulási idő",
+      "verdict": "ok",
+      "note": "Mérve és mostantól kapuzva: hidegen 43 ms a címképernyőig és 422 ms a játékmenetig, melegen 31 és 224 ms (headless Chromium, localhost, production build). A budget a címképernyőnél indul; az ident és a hangkártya kívül van rajta, együtt 11,1 mp. A sourcemap lekerült a drótról — lásd 2.2."
+    },
+    {
+      "criterion": "Cozy / Zen kép",
+      "verdict": "gap",
+      "note": "HELYESBÍTVE: a \"II–VII. üres\" nem volt igaz. Mind a 42 állomásnak van saját backdropja, a Backdrop.ts dispatch-eli őket a Sky/Upper/Orbit/Reentry/Rain/Homecoming fájlokba. A hiány nem a kép hiánya, hanem az, hogy negyvenkettőből hatot néztek meg valaha emberi szemmel, és egyet sem a késői képén. A II. felvonás most végig van nézve mindkét képén és két varrata javítva; a III. hat állomás húsz kereten, egy javított lencsével; a IV. tizennyolc szekción, ahol a bolygó négy állomáson a keret alatt volt és a Földárnyék városai soha nem rajzolódtak ki. Marad az V–VII. (6.5–6.7). A két örökölt találat (thin/ozone 17,0, rain/estuary 10,1) nem reprodukálódik: mind a 42 késői kép 2,09 és 6,66 között van, és a védő a késői képet is méri. KIEGÉSZÍTÉS: a késői kép üresedésére a varrat-szám vak, mert az egy vonalat keres, ami nincs ott, nem a kép hiányát. A sávonkénti vízszintes szórás ezt méri, és a II. felvonáson meg is találta a Permetet (középső sáv 0,95 → 1,46). Kapunak nem alkalmas és nem is lett az: a Karman-vonal, a deorbit és a sóhatár ugyanígy néz ki üresen, mert az a dolguk. SZÍN: a 6.8 megadta a hiányzó tengelyt. A suite minden száma luminancia volt, tehát a §14 — az egyetlen színezetről szóló kritérium — hat felvonáson át mérőműszer nélkül állt. OkLCh-ban olvasva a wash az I. felvonás mechanizmusa (csak ott visz valódi színezetet, 61 és 58 fokot, épp a két osztott zónás állomáson), és tizenkét állomáson bájtra a saját zónája mid-je volt: nulla színt adott és 10–16 %-ot vett el a gradiens tartományából. Javítva, az érintett huszonnégy keret mind szórást nyert. A 6.9 a shellt mérte meg először: 120 szövegfutamból 31 volt WCAG AA alatt és 65 kontrollból 35 a 44 pixeles ujj alatt, mindkettő nullára javítva, a tintafokok 36-ról 7-re. Marad a 6.10."
+    }
+  ],
+  "log": [
+    {
+      "date": "2026-08-05",
+      "text": "A projektnek eddig egyetlen száma sem volt arról, hogy MIKOR mutat valamit, csak arról, hogy mit. Az új mérő az első kilencven másodpercet jelölésekre bontja — első alkalom, amikor a játékos olyat lát, amit még nem —, és a lelet nem az, hogy mennyi van benne, hanem hogy hol nincs: tizenöt jelölésből tizenhárom az első 38 másodpercben, utána 29,1 másodperc, amiben semmi nem új, és az ablak a legkevésbé új pillanatával ér véget. Az ablak egy teljes I. felvonás első 55 százaléka; az első állócsatorna 134,4 mp-kor jön, az első vadász pedig sosem, mert a LEVELS a 6. állomásra teszi — ez a felvonás saját, leírt tanítási görbéje, és a söprés semmilyen változtatást nem indokol, tehát a tartalomhoz nem nyúltunk, csak a mért alakot védtük le. A követelés nélküli víz az ablakban 14,6 %, az egész felvonáson 12 %, tehát a pihenő egyenletes és nem a nyitás hibája — ezt majdnem az ellenkezőjének mértem, mert az üresség a KERETTEL osztott és nem a lefuttatott képkockákkal. Aki hozzá sem nyúl, annak a víz 13,6 mp-nél beolvaszt egy gyűrűt és 15,6-nál lezár egy szekciót, mielőtt 33,7 mp-nél elvinné: tutorial nélkül is érthető, számmal. A képek újralövése két hibát hozott vissza, amit csak megnézéssel lehetett megtalálni: a sorozatjelvény évek óta a hanggomb ALATT rajzolódott — a helyét a szüneteltetés gombhoz mérték, a keverőgomb később került alá —, és így van benne a repóban lévő store-képekben; egyik műszer sem láthatta, mert a chrome.spec a DOM téglalapjait méri, az acts.spec a vásznat, és a kettőt semmi nem hasonlította össze. A másik a szikláról elnevezett kép, amin nem volt szikla: fix 11 másodpercnél lőttük, az első akadály pedig 12,8–15,6-nál ér a keretbe. Mindkettő javítva, a jelvény 114-en kezdődik a 106 ellen, a felvétel pedig feltételre vár és nem órára. Az EDITORIAL.md leletei: a hatvanöt élő kontrollból harmincöt van Google 48dp-je alatt, mind a hatvanöt pontosan 44-en, mert egyetlen változóból mérezik — megmérve, mit kerülne 48-ra vinni (a körképernyő BEGIN felirata lemegy a hajtás alá, és kiderült, hogy az a gomb 44-en is húsz pixellel túllóg), és nem elköltve: layout-döntés, kérdés. A STORE.md pedig azt találta, hogy a játéknak két neve volt: a címképernyő BEYOND CURRENTS-et mondott, öt store felé néző sztring viszont TIDE-ot, tehát a telepített build más néven ült a kezdőképernyőn, mint amivel nyitott. Megkérdezve és eldöntve: TIDE, és a wordmark ment utána — a négybetűs név a két halvány gyűrű közepébe ül, ahol a kétsoros nem ült. A négy betű ára le van írva: a `tide` gyakori szó, tehát Apple-nél az alcím és a kulcsszómező viszi a keresést, a Play-en pedig, ahol nincs alcím, a cím maga: TIDE: You Control the Ocean."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A suite eddig külön tudta számolni a mixerre érkező hangokat és külön tudta olvasni az üveget, de soha nem ugyanarra az eseményre — így arra a kérdésre, hogy amit a szimuláció mond, arra válaszol-e a kép ÉS a hang, egyetlen szám sem létezett a projektben. Az új mérő a SimEvent-unió minden tagját elsüti a saját állomásán, és a nullolvasata 0,82×: pontosan ennyit mér az a három jel, ami semmit nem rajzol, tehát ehhez képest olvasható a többi. A lelet az, hogy a III–VI. felvonás bukása — negyvenkettőből harminc állomáson ez a bukás definíciója: nem futam zárul, hanem az állomás kezdődik újra — egyetlen csatornán sem válaszolt. Nulla effekt, nulla hang, nulla rezgés; a játékos annyit látott, hogy a kamera egy állomásnyi vízzel odébb van, és ezt egy hibától nem lehet megkülönböztetni. Az esemény ráadásul a reset előtt íródott ki a régi kamerapozícióval, tehát bármi, ami valaha megrajzolta volna, a képen kívülre esett volna — a hiba tehát kétrétegű volt, és a felső réteg elrejtette az alsót. Most a reset után megy ki a raj belépési vonalával, a válasz pedig az állomás saját felirata, három záródó gyűrű a tracer színében, és egy ereszkedő szinuszhármas az objectives sávon: szinusz, mert harang az, amit megütnek, és itt semmit nem ütnek meg, és objectives, mert aki a vadászokat halkra vette, annak is hallania kell, melyik vízben van. 0,00 → 10,50× a padló fölött 36 képkockán át és 0,00 → 5,00 hang. A második lelet egy javítás, ami sosem javított: a megszakadt sorozat „lehűti a sínt”, csakhogy a RunState a jelentéssel egy lépésben nullázza a streaket, tehát a fade egy már nulla melegséget szorzott — 0,051 a sín saját 0,054-es zaja ellen, vagyis a sín kevesebbet mozdult, mint magától; a hűlés most a vonal saját alfájáról jön le, 4,41 a 0,10 ellen. Ezt a blokk-passz konstrukció szerint nem láthatta (a sín két pixel széles) és szüneteltetve nem is rajzolódik, mert a hudVisible a módot követi, tehát élőben, tizenhat oszlopra kellett célozni — ugyanaz a módszer, mint a VII. felvonás fénytengelyeinél. Kiderült az is, hogy a SimEventType-ban ült egy 'streak' tag, amit soha senki nem küldött és soha senki nem hallgatott. Jelentve és nem javítva: a veszteség-puff hallatszik, de nem látszik — a lemaradó 0,82×, ami a semmi olvasata, a szikla 1,33 és a ragadozó zsákmánya 1,58, miközben a harapás 3,40 —, mert egy futamonként átbillenő szám azt mondja meg, hova kell nézni, nem azt, mit kell tenni; és a zóna mindkét csatornán néma marad, mert a határt a paletta-átúszás és az ágy folyamatosan válaszolja. Az ujj végül nem hibás: gesztusonként 3,2 hang nyugodt tempóban és 2,1 egymás után indított gesztusoknál."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A shellről kiderült, hogy két dolgot soha senki nem mért meg rajta: hogy olvasható-e, ami rá van írva, és hogy elérhető-e, amit meg kell nyomni. A suite eddig azt tudta bizonyítani, hogy minden ajtó nyílik. Az új mérő tíz shell-állapotot fotóz le kétszer — egyszer festett szöveggel, egyszer anélkül —, és a két keret különbsége a tinta; számolni nem lehetett volna, mert a hátterek fele gradiens, blur vagy egy background-clip: text szómárka, amire a getComputedStyle nem mond se tintát, se hátteret. Az üvegen lévő 120 szövegfutamból 31 volt WCAG AA alatt, a legrosszabb a címképernyő rekordsorának elválasztó pontja 1,91:1-en, ami nem írás; a 65 élő kontrollból 35 nem érte el a 44 pixelt, köztük a két sarokgomb 40×40-nel és a tíz hangerőfader 239×16-tal — a játék egyetlen húzott kontrollja volt a legkisebb célpontja; és a shell harminchatféle színnel írt szöveget, öt majdnem-fehérrel két százalékon belül és nyolc átlátszósággal ugyanabból a kékből. A javítás nem az volt, hogy hangosabbra vesszük a halkat, hanem hogy három fok maradt plusz az akcentus, az arany és a figyelmeztetés, a padló pedig ott van, ahol a leghalkabb még AA fölött van a legsötétebb mezőn: 31 → 0 AA alatti futam, 35 → 0 elérhetetlen kontroll, 36 → 7 tinta, 15 → 12 típusméret. A --unlit a szándékos kivétel és mérve is az marad (2,13:1): egy el nem ért felvonás hiányként van rajzolva. Kiderült az is, hogy az eredményképernyő mezője nem a miénk — az Üllőn ugyanaz a szöveg 0,4 arányt veszít az I. felvonás árkához képest —, ezért a mérés mostantól mindkét vízen fut. Elfogyott a tíz százalékkijelző a faderek mellől, a kapcsolók külön sora, és a .ui-studio: 170 osztályból az egyetlen, amit kód sosem nevezett meg."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A suite hat felvonáson át élt egy olyan kritériummal, amire nem volt műszere: minden szám, amit valaha keretre fogott, luminancia, a §14 pedig az egyetlen, ami a színezetről szól. Az új mérő (tools/palette.sweep.ts, OkLCh) először azt mondta meg, mire való a wash — és nem azt, amit hittünk. A Renderer saját kommentje szerint a szint saját színe a zóna vizében; a mérés szerint ez az I. felvonás mechanizmusa, ahol négy zónapaletta hat szintet visz, és az egyetlen két valódi SZÍNEZET-eltolás a kampányban pontosan az a két állomás, ami osztozik egy palettán: 61 és 58 fok. Utána minden állomásnak saját zónája van, a mechanizmusnak nincs mit szétválasztania, és a harminc megírt wash tónussá szelídül — huszonnégy hat fokon belül a saját mid-jétől. Így lett tizenkettőből a saját zónája mid-je, bájtra: két V. felvonásbeli állomás, öt a VI.-ból és öt a VII.-ből, kitöltött oszlop. A középső stopot önmagával keverni semmi (0,0000 a másik harminc 0,0009–0,0371-e ellen), de a másik két stopot változatlanul húzza felé, tehát a színt nem adó tint tovább szedte a gradienstől a tartománya 10–16 százalékát: tizenkét állomás laposabb vizet rajzolt, mint amit a zónatábla leír. Nem az volt a baj, hogy egy védő rosszul volt megírva, hanem hogy ennek a hibának nincs éle — alakra helyes, tartományra rövid gradiens, amire minden műszerünk konstrukció szerint vak. Mostantól washAmount: 0, és az üvegen mérve mind a huszonnégy érintett keret szórást nyer (medián +0,95, a plazmán +3,50) miközben az átlag alig mozdul (max 1,40); a hatvan érintetlen keret |Δátlag| ≤ 0,10, ami a zaj, és ez adja a mércét. Kettő nem nyert semmit — a Tengeri hó és a Mélytenger —, mert a gradiensük 0,19-ről 0,14-re megy, és nem volt mit visszaadni; jelentve. Mellette az ibolya korona kivezetve mindkét aurórából, de csak azután, hogy bizonyítva lett: a canvas premultiplikáltan interpolál, tehát a nulla alfás stopból annyi jön át, amennyit a kerekítés otthagy — az ibolyát pirosra cserélve 4/255, zöldre 2, egy 0,06 alfás kontroll 15-e ellenében. Ha működött volna, harmadik színezet lett volna a keretben, és a nyelv teal plusz EGY meleg. Új védő: a tests/palette.test.ts nem enged olyan tintet, ami nem mozdít (küszöb 0,004, a Zivatar 0,0063-a alatt és a tizenkettő nullája fölött), és őrzi, hogy az aranyszikra mind a negyvenkét állomáson meleg marad."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A VII. felvonás mindkét söprő műszeren tiszta, és pont ezért kellett aritmetikával célozni. Tizennyolc szekció 3,37–4,90 a varraton és 1,41–2,40 az oszloplépésen: a kampány legcsendesebb felvonása, és az egyetlen, ahol a lelet az, hogy a műszerek nem találtak semmit. A Napfényzóna öt fénytengelye ugyanaz a fillRect keresztgradienssel, ami az Üllő és a Lombkorona volt: a két oldala éltelen, lefelé viszont nem változik semmi, tehát a tengely egy pixel alatt kapcsol ki azon a soron, ahová az end teszi. A rajra rálátó részszélességű mérő ezt nem tudja megmondani (8–23-at mér ugyanazokban az oszlopokban), tehát a IV. felvonás módszere jött elő: rácélozni arra a sorra, amit a képlet megnevez, egyetlen tengely oszlopain belül, a kitöltés saját nyírásával. A legnagyobb lépés a saját end-jére esett három tizedesig, 5,0–7,2 egység. Most radiális gradiens lapított keretben, a kör fölfelé tolva a saját tengelyén, tehát a fénypont a keret fölött van; a kitöltés ott hal el, ahol a téglalap eddig véget ért, tehát a fény továbbra is az állomás menetrendje szerint fogy — és erre külön állítás van, mert ezt a felét egy alakjavítás csendben kitörli. A csúcs-alfa duplázása aritmetika, nem ízlés: állandó alfa helyett 0,65-ről nullára futó rámpa 0,325 átlaggal. 87,3/85,4/82,5 → 86,7/84,9/82,1, vagyis paritás. A Sós határ pedig soha nem rajzolta meg, amiért van: a modul és a §11 is azt mondja, hogy itt tér vissza az arany élő formákban, a keretben viszont a távolodó felszín, a kausztika és a tengeri hó volt, és a középső harmada 2,78/1,72/1,80 — az üres állomások tartománya, az utolsó felvonás nyitóképében. Két sík plankton került bele, és a wrapY ráta a lényeg: a hó a rajjal SÜLLYED (nulla közeli ráta, alig mozdul az üvegen), az élő tartja a mélységét (ráta 1 fölött), tehát a raj megy el mellette. Az első build minden harangot összekötött egyetlen sokszöggé, mert hiányzott a moveTo — és az állomás átlaga 84-ről 112-re ment: a szám azt mondta, több a kép, a keret megmondta az igazat. Utána 3,15/2,10/2,34, változatlan átlag mellett. Az act VI-tal ellentétben az üresedést itt NEM javítottuk: a §11 kifejezetten azt kéri, hogy a fény hat állomáson át fölfelé folyjon ki a képből, és egy állomást nem lehet megjavítani abból, hogy a saját tervét követi. Új védő kettő: a Sós határ testeinek számlálása (248/0/0 → 601/332/256) és a tests/homecoming.test.ts, mert a VII. felvonás hat backdropja soha nem volt unit-teszt alatt."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A Lombkorona fénye egy vonalnál kapcsolt be, és két állomás alatt nem volt semmi. A négy fénysáv keresztben futó gradienssel töltött fillRect: a két oldala éltelen — pont az, amit az V. felvonás óta mindenki ellenőriz —, a téglalap VÉGE viszont él volt, mert a kitöltés lefelé nem változik. Egy pixel alatt teljes erő, négyszer, mind a négy ugyanabban a magasságban: 19,8 egység a nyitón és 40,9 a későin, az Üllő 14,0-je ellenében, amit a II. felvonás a legrosszabbjának hívott. Egyik passz sem láthatta: a seam teljes oszlop-egyetértést kér, a rib ugyanezt sorokra, egy fénysáv meg a szélesség ötöde. Épült rá részszélességű mérő és el lett dobva — a raj, a banner és minden akadály-sziluett 20–80 egységet mér rajta, tehát nincs küszöb, ami a hibát a képtől elválassza; a specificitás a teljes keretre kiterjedő koherenciából jön, és lokális élnek ilyen nem lehet. A hiba ráadásul 0,23h fölött élt, a mező pedig 0,25h-nál kezdődik a banner miatt: minden képkocka felső ötöde méretlen, konstrukció szerint, és ez így is marad, amíg nincs BANNER_LIFE utáni passz. A javítás nem elmozdítja az élt, hanem lehetetlenné teszi: a sáv a keret tetejéről indul és a lombkorona utána rajzolódik rá, tehát elhalványítja ahelyett, hogy elvágná — 5,4 és 0,9 maradt, és az is az akadály, a kép meg világosabb lett, nem sötétebb. A másik kettő a Permet hibája egy és négy állomással odébb: a Cirrus a Futóáramlat üllő nélkül (két függőleges gradiens és kilenc hajszálvonal, 0,92-es középső harmad a vákuum tartományában, egy felhőről elnevezett állomáson), a Torkolat pedig a seaY-on lóg, ami 0,18h-ig megy, tehát a késői képe 0,84/3,11 a saját 6,58/7,64-es nyitója ellen — üres gradiens abban a képben, ami az érkezés, közvetlenül a szándékosan üres Sós határ előtt. Visszakerült az üllő, amit a következő állomás alulról néz, a jég uncinus lett, a vízbe hordalék került. A módszer is változott: minden szám öt, egy másodperccel eltolt képkocka átlaga, mert ugyanaz a Torkolat 1,42-t és 1,13-at mért két olyan buildon, ami csak a plume-ok pillanatnyi helyében tért el."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "Az V. felvonás legszebb állomása hét téglalap volt, és a suite-nak nem is volt szeme arra a tengelyre. Minden eddigi találat sorokat pásztázva került elő — élő gradiens, aminek oszlop-egyetértéssel mért kemény éle van —, az auróra függönyei viszont a másikon álltak: 1,2 képernyő magas fillRect-ek, a saját hosszuk mentén éltelenek, keresztben kétszer kemények, és mindkét élük a keretben a kép teljes magasságában. 11,07 egység koherens oszloplépés, 1,00-s sor-egyetértéssel, egy 0,00–4,69-es mezőnyben, miközben a varratuk ugyanabban a pillanatban 3,05. Az új szám kiugrás és nem nagyság, mert csak ez választja el az élt a rámpától: egy keresztbe fektetett radiális minden oszlopában ugyanoda lép és sokat lép, de nem tud egynél sokkal többet, mint a tíz pixellel odébbieknél. Most radiális lapított keretben, a két kör a főtengely mentén eltolva, tehát a fénypont a közép alatt marad: 11,07 → 2,38, és a csúcs-alfa 1,9-szeresére nőtt, mert egy kúp a henger harmada és a régi kitöltés lemez volt — az átlag 32,8 → 32,1, a vízszintes szórás viszont 17,2/10,8/6,9 → 18,0/13,6/7,5. Mellette a bolygó menetrendjéről kiderült, hogy egy lépés, egy fagyás és egy hiány: a Rálátás 1,0-n zár (0,760h), a Letérés 0,86-on nyitott (0,833h), tehát a Föld 61 px-t hátrált a kampány fordulóján; az Éjszakai oldal csupasz konstanst kapott és 0,781h-n állt mind a négy szekcióján, 3590 px-en át; az Auróra pedig egyáltalán nem rajzolt bolygót, három állomással a modul saját fejléce előtt. Három új menetrend, monoton a felvonáshatáron át, és a pixel három tizedesig egyezik az aritmetikával mindenhol, ahol a perem rajta van a képen. A viharok végre a bolygón vannak: kettő a hétből a perem fölött volt középpontozva, egy harmadik átvirágzott rajta, most a legfelső is 39 px-szel a perem alatt kezdődik, és a drawPlanet visszaadja, hova tette a peremet. Az acts.spec mostantól mindkét tengelyen méri az élt, kilences küszöbbel egy 5,97-es mezőny fölött."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A IV. felvonás bolygója négy állomáson keresztül a kép alatt volt, és a Földárnyék soha egyetlen várost nem rajzolt. A perem a h·(1,28 − 0,52·rise)-nél ül, tehát 0,538-nál lépi át a keret alját, az első négy állomás pedig 0-tól 0,54-ig adott át rise-t: a Szabadesésnél a perem 1,28h, 236 px-szel egy 844 px-es keret alatt. A bolygó, a légsáv, a nappali időjárás és a huszonhat város mind meg volt rajzolva minden képkockán, a semmibe — a városokból nulla meleg pixel a keret alján, mind a három szekción. Varrat nincs a felvonásban: a legnagyobb sorlépés 6,59 a tízes küszöb alatt, mert ez a hiba az ellentétes osztály, amire a suite vak. Hat új rise-érték, a Rálátás érintetlenül (6,17@0,846h és 6,33@0,794h, a magasság három tizedesig ugyanaz); a bolygón ülő dolgok a v.h − surfaceY-ra kiterítve, nem fix képernyőhányadra; a perem aritmetikája három másolat helyett egy limbY-ban. A városok 0 → 164–177, és az acts.spec megszámolja őket. Az V. felvonás ugyanezt a bolygót hívja: a deorbit átlaga 12,6–12,9 → 12,8–13,1, a varratai 0,01-en belül."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A III. felvonás legszebb állomásának éle volt, és a másik két szám, amiért idejöttünk, nem létezik. A gyöngyházfelhő lencséje a saját tengelye mentén éltelen volt — a gradiens mindkét csúcsán nullára fut —, keresztben viszont a ctx.ellipse zárta le, ahol semmi nem halványult el; és mivel egy lencse másfél képernyő széles is lehet, mindkét éle kilóg a keretből, tehát oldal nélküli alakzatként pontosan úgy viselkedik, mint egy fillRect egy élő gradiensen. Ugyanaz az osztály, mint a II. felvonásé, egy lépéssel kijjebb: ott a téglalap vágta el a gradienst, itt a geometria. 4,36–4,53 egység 0,590h-nál, mind a négy szekción, a felvonás legjobb képében, abban az egy állomásban, aminek az egész témája egy felhő, amin nincs kemény él. A képen lapos szürke lencse borotvaéles tetővel, és a névadó irizálás nem látszott sehol. Most radiális gradiens lapított koordinátarendszerben: minden irányban éltelen, lencsénként ugyanaz az egy gradiens, és a szín végre azt csinálja, amit a Motif.ts húsz sorral feljebb állít róla — zöld a testben, rózsa a megvilágított él felé. A varrat eltűnt, az állomás legrosszabbja 3,28–3,50 és nem áll egy helyben, az átlag és a szórás pedig nem mozdult. A módszerről kiderült, hogy két keret kevés: az Upper.ts-ben minden a cameraY-hoz van kötve, a reset pedig ugyanoda teszi a kamerát, tehát a nyitó és a késői kép csak a progressben tér el — a Futóáramlat 5,7–6,4-es varrata 0,43–0,45h-nál épp ezért nem hiba, hanem a jégcsík, amiről az állomást elnevezték. Repülni pedig nem lehet odáig: a felvonás bukáskor újraindítja az állomást, és huszonhat kényszerített lépés a Futóáramlatot 0,55-ig, a Gyöngyházat 0,18-ig vitte. A II. felvonás két örökölt találata nem reprodukálódik: a thin/ozone 4,14@0,793h és a rain/estuary 2,74@0,312h, és mind a 42 állomás késői képe 2,09 és 6,66 közé esik. Ami helyette előkerült, az az air/squall ötödik szekciója, 12,97@0,279h — a két felhőpad alsó éle, vagyis tartalom, és pont az, amitől a tíz alatti küszöb a nyitó képen olcsó: oda a pálya még nem ért oda. Az acts.spec mostantól mind a 42 állomást lefotózza a késői képén is."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A blokkoló nem létezett, a II. felvonásnak viszont két olyan vonal volt a képében, amit egyetlen teszt sem láthatott. A feat/visual-ascension ág sehol nincs — se lokálisan, se az originon, se a reflogban, se dangling objektumként —, és a Strata.ts soha nem volt ebben az objektum-adatbázisban; a repó friss klón, az ág soha nem járt itt. Fölösleges is volt: mind a 42 állomásnak van saját backdropja, a hiány az, hogy negyvenkettőből hatot nézett meg valaha ember, és egyet sem a késői képén — pedig az állomás saját progressze fél képernyőn átviszi a padlóját és a fényét. A késői képen kiderült két hiba, és mindkettő ugyanaz az osztály, aminek eddig nem volt neve: élő gradienst elvág a saját fillRect-je. Egy gradiens csak ott éltelen, ahol nullára fut, tehát a téglalap, ami máshol áll meg, teljes szélességű kemény vonalat hagy — és minden teszt zöld marad, mert a keret nem lapos, nem fekete, nem kiégett, és pontosan azt rajzolja, amit a unit tesztje állít. Az Üllő fénysávja a saját legvilágosabb pontján ért véget: 14,0 fényerő-egység éltől élig, a felvonás legszebb képében, egy harmad képernyővel a vihartető fölött. A Zivatar fényrése egy ötöd képernyővel a saját sugarán belül kezdődött: 3,9 egység pontosan 0,3h-nál, a nyitón és a későin egyformán. A drágább tanulság a másik kettő: két gyanút a szám megcáfolt. A Partfal két hajszálvonalnak látszik, de a keret bal huszada 39–48 egységgel sötétebb az égnél, 2,5-es legnagyobb oszlop-lépéssel — vagyis pont az éltelen rámpa, amire tervezték, és a szem, ami vékonynak olvassa, a működést olvassa, nem a hibát. A Permet vize 57–67 egységgel van az extrapolált ég alatt: halk, nem hiányzik. A védő mind a 42 állomáson méri a varratot és tíz alatt tartja; a mezőny 2,3–6,9, az Üllő hibája 14,0 volt előtte és 4,3 utána. A specificitás koherenciából jön, nem nagyságból: egy felhő felső éle ugyanekkora sorlépés, de alakzat, és az alakzatnak oldala van. Ezért a Zivatar 3,9-e kampányszintű küszöbbel nem is fogható — azt a kódkomment őrzi, nem szám. A söprés két állomást hagyott nyitva a küszöb fölött, egyiket sem a II. felvonásban: thin/ozone 17,0 és rain/estuary 10,1, mindkettő csak a késői képen."
+    },
+    {
+      "date": "2026-08-04",
+      "text": "A hatpontos brief átvéve, tíz kérdésben eldöntve a hatókör. Nyolc fázis, harmincöt részfeladat. A bukás-rendszer és a monetizáció kimarad."
+    },
+    {
+      "date": "2026-08-04",
+      "text": "Öt állítás számot kapott. A játékmenet 1033 ms-re van hidegen és 290-re melegen; a ciklus 104 B-ot allokál képkockánként; 30 és 144 Hz között az idő egy lépésen belül pontos; 3×-on az él 1,33 CSS px az 1,0 helyett, mert a natív 3× 31,6 ms-os képkockát jelentene. A hideg offline indulás pedig nem hibaüzenettel bukik, hanem némán: a bundle 200-as választ kap text/html törzzsel."
+    },
+    {
+      "date": "2026-08-04",
+      "text": "A zero-GC állítás átment egy jobb műszeren, és kiderült, hogy a régi műszer két dolgot mért rosszul. A szonda mostantól visszaolvassa a sourcemapet, tehát megnevezi a saját helyeit — és a nevekből látszott, hogy hidegen a V8 fordítóját méri, nem a játékot, illetve hogy mindkét allokációs teszt egy rég megbukott futamon dolgozott: a raj ringMissed-re veszett a mintavétel negyedik másodpercében, és a teszt pont ettől lett zöld. Bemelegítés és terelés után a valódi szám 37 B/képkocka nyitva és 109 terhelten, a szimulációs fele 20 és 65. A Math.hypot → Math.sqrt csere mind a 46 helyen megtörtént és vissza lett vonva: a hypot sor eltűnt a listáról, a végösszeg nem mozdult, cserébe elmozdult volna az act I kanárija. A plafon 20 000-ről 400 bájtra szigorodott, és új védő került a npm test-be."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A kéz alatti játék kapott egy szótárt, egy varratot és egy hiányzó ujjat. A tíz híváspont helyben írt mintázataiból tíz nevesített cue lett egy driver mögött, ami mindkét nyelven leírja magát — mert az iOS Safari sosem ismerte a navigator.vibrate-et, tehát a régi kód azon a platformon néma volt, és egy natív motor nem ms-tömböt vesz át, hanem súlyt. A safe-area szabályok most először futottak le valóban: a tizenhat env() négy custom property lett, amit egy teszt felül tud írni, és öt valós geometrián mérve két szabály megbukott — a shell margója fekvőben a képernyő széléről mérődött, a mixer fiók pedig 100vw-ből, így a szemközti kivágás alá lógott. A pointer oldalán a beragadt húzás lett megfogva: háttérbe küldött WebView vagy elvett iOS él-gesztus után a track bent maradt, és a következő azonos azonosítójú mozgás percekkel korábbi pontból húzott egy csíkot az egész óceánon."
+    },
+    {
+      "date": "2026-08-04",
+      "text": "A repülőmódos indulás megjavult, és a három másodperc kapuvá vált. A worker mostantól a build asset-listáját precache-eli, és a shell-fallback csak navigációra megy — a hiányzó JS hibát kap, nem HTML-t. A budget helye eldőlt: a kezdőképernyőnél indul, az ident és a hangra felhívás megmarad és kívül esik rajta (ceremóniástul 11,1 mp, mérve, nem kapuzva). A sourcemap hidden lett, a .map lekerült a drótról."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A skála eddig csak a leírt cue-kra vonatkozott, a kihallott hangokra nem — és ez most szám. A motorban minden hang, aminek a magassága fokszámból jött, kötelezően a pentatonon volt; minden hang, aminek a magassága fizikai mennyiségből jött — kristályméret, pehelymélység, bálnaregiszter, ujjsebesség —, hertzben volt megírva és senkinek nem tartozott felelősséggel. Mind a nyolc ágyon lemérve: 1445 hang szólt fél másodpercnél tovább, és bő a fele 25 centnél messzebb esett bármitől, amit a játék jogosan szólaltat meg — átlag 31 cent, legrosszabb 99. Negyedhang, két másodpercig kitartva, egy sosem mozduló orgonapont fölött. A határ mostantól időtartam és nem ízlés — fél másodperc fölött hang, alatta textúra —, és mindkét fele állítva van, mert tizenöt csepp másodpercenként öt hangosztályra ejtve zenedoboz lenne, nem eső. A legdrágább hiba a harang sötétítése volt: egy folytonos 1,0→0,75 szorzó, aminek csak a két vége zenei, és ami minden csengőt és minden zárócue-t elért. A legszebb a vadászé: a harapás egy G#-ra csúszott le, a vezetőhangra, arra az egyetlen hangközre, amiért a skálában nincs szeptim. A bálna a saját fejlécének hazudott — pentaton volt, véletlen alaphangon —, és a javítás második nekifutásra sikerült, mert a hangonkénti kvantálás megjavította a hangnemet és eltörte a glissandót: kvartból kisterc lett, amit a fájl saját vibrátó-szabálya kapott el. Utána egy sem lóg le: az átlag 0,2 cent, és a legrosszabb 12, ami a bálna szándékos inharmonikus felhangja. Mellette a motor egyetlen valódi loopja is körbeért — a közös barnazaj varrata 4,5-szerese volt egy rendes mintaközi átmenetnek, 0,85 Hz-enként, minden felvonásban —, és a hang végre bizonyítható is: a voicesPlayed a mixer-sávot elérő hangokat számolja, mert egy futó AudioContext és egy hallható játék eddig ugyanúgy nézett ki kívülről."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A II. felvonás lezárva hitt hat állomása közül egy mégis üres volt, és kiderült, hogy a suite-nak nem is volt szeme rá. A varrat-szám egy vonalat keres, ami nincs ott; arra, hogy a kép *helyén* van-e egyáltalán kép, se a spread, se a variety nem tud felelni, mert az egész képkockára számolnak, és abban mindig ott a banner, a HUD és a raj. Az új szám soronkénti vízszintes szórás három sávban: egy függőleges gradiensnek ez konstrukció szerint nulla, egy tarajnak, felhőnek vagy esőcsíknak nem lehet az. Ez nevezte meg a Permetet — a késői képe 2,05/0,95/6,75, a középső harmad az első két felvonás legalacsonyabbja, ugyanannak az állomásnak a nyitóképén 8,44 —, azt az állomást, amit az előző futás víz-kontra-ég méréssel épp fölmentett: az a szám arra felelt, hogy ott van-e a víz, nem arra, hogy van-e bármi a keret közepén. Az ok az volt, hogy ez a felvonás egyetlen egysíkú állomása, egy olyan fájlban, aminek a leírt szabálya legalább kettő: minden eleme a seaY-ra lógott, ami a végére 0,96h-ra süllyedt, és a víz úgy ment el, hogy nem lépett a helyére semmi. Kapott scud-ot, két lapos fillt és nem a gomolymező három rétegét, mert a 3. állomás az a kép — 2,71/1,46/10,40, a nyitókép érintetlen. Az első nekifutás ötöt rajzolt fél képernyős térközzel, és 0,95-ről 0,93-ra vitte a számot: a wrapY pozíciói kettesével egy rekeszbe estek, tehát pont oda nem rajzolt, ahol a lyuk volt. A sáv-szám nem lett kapu, és ez is mérés, nem óvatosság: a Karman-vonal, a deorbit és a sóhatár ugyanígy néz ki üresen, mert az a dolguk, a vonulás pedig a saját késői képére legálisan elveszti a tartalma háromnegyedét — egyetlen küszöb sem választja el őket a defekttől, ami ne lenne ráhangolva a válaszra. Mellette a dashboard számolója megtanulta a void-ot, aminek a stílusa megvolt, a nevezője nem: a 6. fázis a törölt 6.1-gyel sosem érhette volna el a 100 %-ot."
+    },
+    {
+      "date": "2026-08-05",
+      "text": "A térkép BEGIN gombja fent van az üvegen, és kiderült, hogy nem huszonnégy pixelről volt szó. A régi szám egy telefonról és egy profilról származott, ami a család legenyhébb esete: ugyanaz a gomb egy 375×667-en friss profillal is 76,4 pixellel lóg a hajtás alá, zárt kör után 123,4-gyel, fekvőben 400,2-vel — vagyis az a képernyő minden olyan telefonon a saját elsődleges gombja nélkül nyílik, ami rövidebb a tesztelt egynél, az első indítástól fogva, és a suite ezt azért nem mondta ki, mert a cenzus csak a TELJESEN képen kívüli dobozt jegyzi meg, azt is kapu nélkül. Pixelt nyesni nem lehetett rá: az egyetlen engedő blokk a kép, aminek a szélessége a magasságából jön, és aminek minden szélességpixele az állomásnevek betűmérete, tehát a gombot a térképpel kellett volna kifizetni. Kitapasztva a görgetőszelvény aljára viszont nem kerül semmibe: 0, 34 és 48 pixeles kivágáson mérve a ráhagyás mindháromszor pontosan a shell saját húsz pixele — a bottom nulla, mert a szelvény a konténer paddingjét már levonta —, és a gomb magától elenged az oszlop végén, ahol a törlés és a vissza sértetlenül a helyén van. Az ára meg van számolva, nem kimondva: hét szövegfutam kerül mögé, ami a tintacenzus harmadik kivétele lett, és egy kontroll, a második kapcsoló, aminek 44-ből 17,3 pixele marad szabadon; teljesen eltemetve egy sincs, és ez mostantól kapu. Az új mérő nyolc képernyőt néz négy üvegen, 32 elsődlegest, nullát a hajtás alatt, a legszorosabb 20 pixel ráhagyással. A store-kép is javult: a repóban ülő 11-circuit.png-n a CONTINUE félbe volt vágva. És a 7.3 óta nyitva álló 48dp-s kérdés blokkolója megszűnt — a --reach 48-on a gomb nem mozdul, az oszlop nyolc pixellel nő, a második kapcsoló 13,3-ra fogy."
+    }
+  ]
+}
+  </script>
+
+    <style>
+      /* Kemény lapos vektor. Se árnyék, se gradiens, se lekerekített folt. */
+      :root {
+        --bg: #06171c;
+        --panel: #0a212800;
+        --line: #123239;
+        --line-soft: #0e2a31;
+        --ink: #d3e7e7;
+        --dim: #6f9298;
+        --teal: #3fbfb0;
+        --amber: #e0a23c;
+        --red: #c86a5a;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f1f5f4;
+          --panel: #ffffff00;
+          --line: #c9d8d7;
+          --line-soft: #dde7e6;
+          --ink: #0b2229;
+          --dim: #5d7a7e;
+          --teal: #1a8375;
+          --amber: #a06d15;
+          --red: #a2483a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 44px 22px 90px;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      header p.sub {
+        margin: 6px 0 0;
+        color: var(--dim);
+      }
+      .meta {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        font-size: 13px;
+        color: var(--dim);
+      }
+      .meta b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* A teljes kör: egy vonal, ahogy a térkép is egy vonal. */
+      .overall {
+        margin: 26px 0 34px;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 18px 0;
+      }
+      .bar {
+        height: 6px;
+        background: var(--line-soft);
+        position: relative;
+        overflow: hidden;
+      }
+      .bar > i {
+        display: block;
+        height: 100%;
+        background: var(--teal);
+      }
+      .bar.small {
+        height: 3px;
+      }
+      .overall .nums {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 10px;
+      }
+      .overall .pct {
+        font-size: 30px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .overall .of {
+        color: var(--dim);
+        font-size: 13px;
+      }
+
+      h2.sec {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--dim);
+        margin: 38px 0 14px;
+      }
+
+      /* Fázisok */
+      .phase {
+        border-top: 1px solid var(--line);
+        padding: 16px 0 18px;
+      }
+      .phase:last-of-type {
+        border-bottom: 1px solid var(--line);
+      }
+      .phase.is-active {
+        border-left: 2px solid var(--amber);
+        padding-left: 14px;
+        margin-left: -16px;
+      }
+      .phase.is-done .ptitle {
+        color: var(--dim);
+      }
+      .phead {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .pnum {
+        font-variant-numeric: tabular-nums;
+        color: var(--dim);
+        font-size: 13px;
+        min-width: 18px;
+      }
+      .ptitle {
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0;
+        flex: 1;
+      }
+      .pcount {
+        font-size: 12px;
+        color: var(--dim);
+        font-variant-numeric: tabular-nums;
+      }
+      .pgoal {
+        color: var(--dim);
+        font-size: 13.5px;
+        margin: 3px 0 0 28px;
+      }
+      .crit {
+        margin: 8px 0 0 28px;
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .crit span {
+        font-size: 11px;
+        color: var(--dim);
+        border: 1px solid var(--line);
+        padding: 0 6px;
+        line-height: 17px;
+      }
+      .pbar {
+        margin: 12px 0 0 28px;
+      }
+
+      /* Részfeladatok */
+      ul.tasks {
+        list-style: none;
+        margin: 12px 0 0 28px;
+        padding: 0;
+      }
+      ul.tasks li {
+        display: grid;
+        grid-template-columns: 12px 34px 1fr;
+        gap: 10px;
+        padding: 7px 0;
+        border-top: 1px solid var(--line-soft);
+        align-items: start;
+      }
+      ul.tasks li:first-child {
+        border-top: none;
+      }
+      .mark {
+        width: 9px;
+        height: 9px;
+        margin-top: 6px;
+        border: 1px solid var(--dim);
+      }
+      .st-done .mark {
+        background: var(--teal);
+        border-color: var(--teal);
+      }
+      .st-active .mark {
+        background: var(--amber);
+        border-color: var(--amber);
+      }
+      .st-blocked .mark {
+        border-color: var(--red);
+        background: var(--red);
+      }
+      /* Törölve: nem kész és nem is lesz, mert a feladat premisszája nem állt.
+         Nem számít bele a készbe, de nem is blokkol - áthúzva, halkan. */
+      .st-void .mark {
+        border-style: dashed;
+      }
+      .tid {
+        color: var(--dim);
+        font-size: 12.5px;
+        font-variant-numeric: tabular-nums;
+        margin-top: 1px;
+      }
+      .tt {
+        font-size: 14.5px;
+      }
+      .st-done .tt {
+        color: var(--dim);
+      }
+      .st-blocked .tt {
+        color: var(--red);
+      }
+      .st-void .tt {
+        color: var(--dim);
+        text-decoration: line-through;
+      }
+      .tn {
+        display: block;
+        color: var(--dim);
+        font-size: 12.5px;
+        line-height: 1.5;
+        margin-top: 2px;
+      }
+      .tcommit {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11.5px;
+        color: var(--dim);
+        border: 1px solid var(--line);
+        padding: 0 4px;
+        margin-left: 6px;
+      }
+
+      /* Audit-tábla */
+      table.audit {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      table.audit td {
+        border-top: 1px solid var(--line-soft);
+        padding: 8px 10px 8px 0;
+        vertical-align: top;
+      }
+      table.audit tr:first-child td {
+        border-top: 1px solid var(--line);
+      }
+      td.v {
+        width: 74px;
+        white-space: nowrap;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      td.c {
+        width: 34%;
+        font-weight: 500;
+      }
+      td.n {
+        color: var(--dim);
+        font-size: 12.5px;
+      }
+      .v-ok {
+        color: var(--teal);
+      }
+      .v-part {
+        color: var(--amber);
+      }
+      .v-gap {
+        color: var(--red);
+      }
+
+      /* Befagyasztva + napló */
+      ul.plain {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      ul.plain li {
+        border-top: 1px solid var(--line-soft);
+        padding: 8px 0 8px 16px;
+        position: relative;
+        color: var(--dim);
+        font-size: 13.5px;
+      }
+      ul.plain li:first-child {
+        border-top: 1px solid var(--line);
+      }
+      ul.plain li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 15px;
+        width: 7px;
+        height: 1px;
+        background: var(--dim);
+      }
+      .logdate {
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+        margin-right: 8px;
+      }
+      footer {
+        margin-top: 46px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--dim);
+        font-size: 12px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.92em;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap" id="app"></div>
+
+    <script>
+      (function () {
+        var el = document.getElementById('slowblue-state');
+        var s;
+        try {
+          s = JSON.parse(el.textContent);
+        } catch (e) {
+          document.getElementById('app').textContent =
+            'A slowblue-state blokk nem érvényes JSON: ' + e.message;
+          return;
+        }
+
+        function esc(t) {
+          return String(t == null ? '' : t).replace(/[&<>]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];
+          });
+        }
+        function countDone(p) {
+          var n = 0;
+          for (var i = 0; i < p.tasks.length; i++)
+            if (p.tasks[i].status === 'done') n++;
+          return n;
+        }
+        /* A törölt részfeladat kikerül a nevezőből is. A stílusa megvolt, a
+           számolása nem: egy void feladat sosem lesz done, tehát a fázisa
+           sosem érhette volna el a 100%-ot, és a kör összesenje egy olyan
+           feladatot húzott volna lefelé, amit épp azért töröltünk, mert nincs
+           mit elvégezni rajta. */
+        function countLive(p) {
+          var n = 0;
+          for (var i = 0; i < p.tasks.length; i++)
+            if (p.tasks[i].status !== 'void') n++;
+          return n;
+        }
+        function phaseStatus(p) {
+          var d = countDone(p);
+          if (d === countLive(p)) return 'done';
+          if (d > 0) return 'active';
+          for (var i = 0; i < p.tasks.length; i++)
+            if (p.tasks[i].status === 'active') return 'active';
+          return 'todo';
+        }
+
+        var total = 0,
+          done = 0,
+          active = null;
+        s.phases.forEach(function (p) {
+          total += countLive(p);
+          done += countDone(p);
+        });
+        for (var i = 0; i < s.phases.length; i++) {
+          if (phaseStatus(s.phases[i]) !== 'done') {
+            active = s.phases[i];
+            break;
+          }
+        }
+        var pct = total ? Math.round((done / total) * 100) : 0;
+
+        var h = '';
+        h +=
+          '<header><h1>' +
+          esc(s.title) +
+          '</h1><p class="sub">' +
+          esc(s.subtitle) +
+          '</p>' +
+          '<div class="meta"><span>ág <b>' +
+          esc(s.branch) +
+          '</b></span><span>frissítve <b>' +
+          esc(s.updated) +
+          '</b></span><span>most itt tartunk: <b>' +
+          (active ? esc(active.id + '. ' + active.title) : 'kész') +
+          '</b></span></div></header>';
+
+        h +=
+          '<div class="overall"><div class="nums"><span class="pct">' +
+          pct +
+          '%</span><span class="of">' +
+          done +
+          ' / ' +
+          total +
+          ' részfeladat, ' +
+          s.phases.length +
+          ' fázisban</span></div>' +
+          '<div class="bar"><i style="width:' +
+          pct +
+          '%"></i></div></div>';
+
+        h += '<h2 class="sec">Fázisok</h2>';
+        s.phases.forEach(function (p) {
+          // A soron következő fázis akkor is meg van jelölve, ha még egy
+          // részfeladata sincs elkezdve - a fejléc rá mutat, tehát a listában is
+          // látszania kell. Enélkül egy frissen kezdett fázis semmiben nem
+          // különbözik a hátrébb lévőktől.
+          var st = p === active ? 'active' : phaseStatus(p);
+          var d = countDone(p);
+          var live = countLive(p);
+          var w = live ? Math.round((d / live) * 100) : 0;
+          h +=
+            '<section class="phase is-' +
+            st +
+            '"><div class="phead"><span class="pnum">' +
+            p.id +
+            '</span><h3 class="ptitle">' +
+            esc(p.title) +
+            '</h3><span class="pcount">' +
+            d +
+            '/' +
+            live +
+            '</span></div>';
+          h += '<p class="pgoal">' + esc(p.goal) + '</p>';
+          if (p.criteria && p.criteria.length) {
+            h += '<div class="crit">';
+            p.criteria.forEach(function (c) {
+              h += '<span>' + c + '. kritérium</span>';
+            });
+            if (p.chunked)
+              h += '<span>felvonásonként fut</span>';
+            h += '</div>';
+          }
+          h +=
+            '<div class="pbar bar small"><i style="width:' + w + '%"></i></div>';
+          h += '<ul class="tasks">';
+          p.tasks.forEach(function (t) {
+            h +=
+              '<li class="st-' +
+              esc(t.status) +
+              '"><span class="mark"></span><span class="tid">' +
+              esc(t.id) +
+              '</span><span><span class="tt">' +
+              esc(t.title) +
+              '</span>' +
+              (t.commit
+                ? '<span class="tcommit">' + esc(t.commit) + '</span>'
+                : '') +
+              (t.note ? '<span class="tn">' + esc(t.note) + '</span>' : '') +
+              '</span></li>';
+          });
+          h += '</ul></section>';
+        });
+
+        if (s.audit && s.audit.length) {
+          h += '<h2 class="sec">Kiindulási audit</h2><table class="audit">';
+          s.audit.forEach(function (a) {
+            var label =
+              a.verdict === 'ok'
+                ? 'megvan'
+                : a.verdict === 'part'
+                  ? 'részben'
+                  : 'hiány';
+            h +=
+              '<tr><td class="v v-' +
+              esc(a.verdict) +
+              '">' +
+              label +
+              '</td><td class="c">' +
+              esc(a.criterion) +
+              '</td><td class="n">' +
+              esc(a.note) +
+              '</td></tr>';
+          });
+          h += '</table>';
+        }
+
+        if (s.frozen && s.frozen.length) {
+          h += '<h2 class="sec">Befagyasztva — ehhez nem nyúlunk</h2><ul class="plain">';
+          s.frozen.forEach(function (f) {
+            h += '<li>' + esc(f) + '</li>';
+          });
+          h += '</ul>';
+        }
+
+        if (s.log && s.log.length) {
+          h += '<h2 class="sec">Napló</h2><ul class="plain">';
+          s.log
+            .slice()
+            .reverse()
+            .forEach(function (l) {
+              h +=
+                '<li><span class="logdate">' +
+                esc(l.date) +
+                '</span>' +
+                esc(l.text) +
+                '</li>';
+            });
+          h += '</ul>';
+        }
+
+        h +=
+          '<footer>Ezt a lapot a <code>/slowblue</code> parancs írja. Az állapot a fájl tetején lévő ' +
+          '<code>slowblue-state</code> JSON blokkban van; kézi szerkesztésnél azt szerkeszd, ne a HTML-t.</footer>';
+
+        document.getElementById('app').innerHTML = h;
+      })();
+    </script>
+  </body>
+</html>
