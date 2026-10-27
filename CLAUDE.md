@@ -91,9 +91,8 @@ before writing it if you were not the last one to touch it.
 
 **This is a public repository.** Nothing that reaches a commit here is private, and git
 history is hard to scrub — so no keys, no personal identifiers, no paths out of someone's
-home directory. There is nothing to sign and no secret the build needs: the deploy
-workflow publishes a static `dist/` with GitHub's own Pages token and asks for nothing
-else.
+home directory. There is nothing to sign and no secret the build needs: the deploy is a
+static `dist/` pushed to a branch, and it asks for nothing but a push.
 
 **`main` is the only branch** that holds work, and it is the default branch. `gh-pages`
 is build output and nothing else: `npm run deploy` replaces it with one orphan commit, so
