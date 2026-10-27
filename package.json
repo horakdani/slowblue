@@ -25,6 +25,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "deploy": "bash tools/deploy.sh",
     "preview": "vite preview --port 4173",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",

@@ -50,10 +50,11 @@ what GitHub Pages does to a project site — pass the path in:
 BASE_PATH=/slowblue/ npm run build
 ```
 
-That is how the published site is built: the contents of `dist/` (minus the sourcemaps,
-which nothing in the app refers to) sit on the `gh-pages` branch, and Pages serves that
-branch. It is a manual step today rather than a workflow, so a change to `main` is not
-live until someone rebuilds.
+That is how the published site is built, and `npm run deploy` is the whole of it: it
+builds with that path, drops the sourcemaps nothing refers to, and force-pushes the
+result as a single commit on the `gh-pages` branch, which is what Pages serves. There is
+no deploy workflow — pushing one would need an OAuth scope this repo was set up without —
+so a change to `main` is not live until someone runs that command.
 
 Everything that has to agree with that reads it rather than repeating it: the service
 worker takes its own location, the manifest's URLs are relative to itself, and the

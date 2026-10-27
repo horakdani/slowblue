@@ -11,7 +11,7 @@ things that were already decided or re-learning things that were already measure
 
 TypeScript + Vite, no framework. Canvas 2D (`src/render/`, no WebGL), procedural Web Audio
 (`src/audio/`), Pointer Events, fixed 1/60 s simulation step (`src/core/GameLoop.ts`),
-44k lines, 821 unit tests, PWA with an offline service worker.
+44k lines, 790 unit tests, PWA with an offline service worker.
 
 **The campaign has been rebuilt: 432 sections and 144 authored minutes, from 182 and 72.**
 Six acts of about twenty-two minutes and act I frozen at ten, because it is the metronome
@@ -95,8 +95,9 @@ home directory. There is nothing to sign and no secret the build needs: the depl
 workflow publishes a static `dist/` with GitHub's own Pages token and asks for nothing
 else.
 
-**`main` is the only branch** and holds everything; it is also the default branch, the
-branch CI gates and the branch Pages deploys from.
+**`main` is the only branch** that holds work, and it is the default branch. `gh-pages`
+is build output and nothing else: `npm run deploy` replaces it with one orphan commit, so
+never commit to it and never merge it anywhere.
 
 ## The workflow
 
@@ -126,8 +127,10 @@ before doing anything; it is the only record that survives a session.
   built in August is gone from this repo, along with the three runtime dependencies it
   needed and the store copy written for it. What replaces it is the thing that was
   underneath all along: an installable PWA, open source under MIT, served by GitHub
-  Pages from the `gh-pages` branch - built by hand with `BASE_PATH=/slowblue/`, so a
-  change to `main` is not live until someone rebuilds. Two consequences worth keeping in
+  Pages from the `gh-pages` branch. There is no deploy workflow and no CI, because
+  pushing anything under `.github/workflows/` needs an OAuth scope this repo was created
+  without; `npm run deploy` (`tools/deploy.sh`) is the deploy, run by hand, so a change
+  to `main` is not live until someone runs it. Two consequences worth keeping in
   mind - the build must survive being served under a path (see `vite.config.ts`), and
   the haptics driver seam in `platform/Haptics.ts` now has exactly one driver behind it.
   The seam stays: it is what keeps the cue table the only way the game buzzes.
