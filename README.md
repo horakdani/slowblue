@@ -15,7 +15,7 @@ told none of that. They find out when the water starts looking familiar.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<p align="center"><img src="docs/screens/00-title.png" alt="title" width="280"></p>
+<table align="center"><tr><td><img src="docs/screens/00-title.png" alt="title" width="280"></td></tr></table>
 
 ## Play it
 
@@ -220,7 +220,7 @@ one button, and it is a dial: forty-two marks around one closed ring, seven band
 for the seven acts. Where it starts is where it ends, because it is the same place — on a
 ring that is not a claim, it is the geometry.
 
-<p align="center"><img src="docs/screens/11-circuit.png" alt="the circuit" width="280"></p>
+<table align="center"><tr><td><img src="docs/screens/11-circuit.png" alt="the circuit" width="280"></td></tr></table>
 
 * **What is done and what is left.** The flown part of each band is lit and the rest is
   an outline; every station is a mark on the line, filled once it is behind you.
@@ -486,7 +486,7 @@ completion is still checked by playing it. See §18 of
 
 The surface, which is the only thing the whole ascent is for:
 
-<p align="center"><img src="docs/screens/09-surface.png" alt="the surface" width="280"></p>
+<table align="center"><tr><td><img src="docs/screens/09-surface.png" alt="the surface" width="280"></td></tr></table>
 
 See [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) for architecture, tuning points,
 measurements and the deliberate compromises.
