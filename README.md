@@ -15,7 +15,7 @@ told none of that. They find out when the water starts looking familiar.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-![title](docs/screens/00-title.png)
+<p align="center"><img src="docs/screens/00-title.png" alt="title" width="280"></p>
 
 ## Play it
 
@@ -220,7 +220,7 @@ one button, and it is a dial: forty-two marks around one closed ring, seven band
 for the seven acts. Where it starts is where it ends, because it is the same place — on a
 ring that is not a claim, it is the geometry.
 
-![the circuit](docs/screens/11-circuit.png)
+<p align="center"><img src="docs/screens/11-circuit.png" alt="the circuit" width="280"></p>
 
 * **What is done and what is left.** The flown part of each band is lit and the rest is
   an outline; every station is a mark on the line, filled once it is behind you.
@@ -480,15 +480,13 @@ completion is still checked by playing it. See §18 of
 
 | | |
 | --- | --- |
-| ![start](docs/screens/01-start.png) | ![rock](docs/screens/03-rock.png) |
-| ![rescue](docs/screens/04-rescue.png) | ![split](docs/screens/06-split.png) |
-| ![hunter](docs/screens/07-hunter.png) | ![game over](docs/screens/05-game-over.png) |
+| <img src="docs/screens/01-start.png" alt="start" width="260"> | <img src="docs/screens/03-rock.png" alt="rock" width="260"> |
+| <img src="docs/screens/04-rescue.png" alt="rescue" width="260"> | <img src="docs/screens/06-split.png" alt="split" width="260"> |
+| <img src="docs/screens/07-hunter.png" alt="hunter" width="260"> | <img src="docs/screens/05-game-over.png" alt="game over" width="260"> |
 
 The surface, which is the only thing the whole ascent is for:
 
-![the surface](docs/screens/09-surface.png)
-
-![game over](docs/screens/05-game-over.png)
+<p align="center"><img src="docs/screens/09-surface.png" alt="the surface" width="280"></p>
 
 See [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) for architecture, tuning points,
 measurements and the deliberate compromises.
